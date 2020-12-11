@@ -2,14 +2,14 @@ version: '3'
 
 services:
         ipsec:
-                build: .
+                build: ./core
                 restart: unless-stopped
                 volumes:
                         - "/etc/timezone:/etc/timezone:ro"
                         - "/etc/localtime:/etc/localtime:ro"
                         - "./_volumes/vici_socket:/var/run"
 #                        - "./swanctl.conf:/etc/swanctl/swanctl.conf:ro" #you might want to load this!
-                        - "./charon.conf:/etc/strongswan.d/charon.conf:ro"
+                        - "./core/charon.conf:/etc/strongswan.d/charon.conf:ro"
                 environment:
                         - PUBLIC_IP={{publicIP}}
                 cap_add:
