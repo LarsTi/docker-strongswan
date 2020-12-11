@@ -1,4 +1,4 @@
 #Ignoring docker-compose files
 docker-compose.yaml
-Ignoring open files:
+#Ignoring open files:
 *.swp
