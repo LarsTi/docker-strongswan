@@ -1,0 +1,36 @@
+version: '3'
+
+services:
+        ipsec:
+                build: .
+                restart: unless-stopped
+                volumes:
+                        - "/etc/timezone:/etc/timezone:ro"
+                        - "/etc/localtime:/etc/localtime:ro"
+                        - "./_volumes/vici_socket:/var/run"
+#                        - "./swanctl.conf:/etc/swanctl/swanctl.conf:ro" #you might want to load this!
+                        - "./charon.conf:/etc/strongswan.d/charon.conf:ro"
+                environment:
+                        - PUBLIC_IP={{publicIP}}
+                cap_add:
+                        - NET_ADMIN
+                        - SYS_ADMIN
+                sysctls:
+                        - net.ipv4.ip_forward=1
+                ports:
+                        - "500:500/udp"
+                        - "4500:4500/udp"                
+                networks:
+                        default:
+                                ipv4_address: 172.16.250.50
+                        public:
+                                ipv4_address: {{publicIP}}
+networks:
+        default:
+                ipam:
+                        config:
+                                - subnet: 172.16.250.1/24
+        public:
+                ipam:
+                        config:
+                                - subnet: {{publicIP}}/30{{subnet must be calculated}}
