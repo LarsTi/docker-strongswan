@@ -22,7 +22,11 @@ else
         echo "Found IP2 $ip2 being internal IP, routable"
         me="$ip2"
 fi
- 
+if [[ -z "$ip1" || -z "$ip2" ]]; then
+	echo "One IP was not found, Error in Configuration"
+	echo "This is not recoverable!"
+	exit 1
+fi 
 echo "Setting up NAT so strongswan can use the public ip without caring about routing"
 iptables --table nat --insert PREROUTING --destination $me --jump DNAT --to-destination $pubip
 
