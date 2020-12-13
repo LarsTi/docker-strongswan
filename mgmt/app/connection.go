@@ -19,6 +19,7 @@ type connection struct {
         Dpd_timeout     string          `vici:"dpd_timeout"`
         Mobike          string          `vici:"mobike"`
         Unique          string          `vici:"unique"`
+	Encap		string		`vici:"encap"`
 
 }
 type authOpts struct {
@@ -80,6 +81,7 @@ func loadConnection(s *vici.Session, path string) bool{
                 Dpd_delay: "2s",
                 Mobike: "no",
                 Unique: "replace",
+		Encap: "yes",
         }
         msg, err := vici.MarshalMessage(c)
         if err != nil {
