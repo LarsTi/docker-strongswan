@@ -35,7 +35,7 @@ func main() {
 	go connectionIniator(s)
         go monitorConns(s)
 	for {
-		
+		time.Sleep(1 * time.Second)
 	}
 }
 
