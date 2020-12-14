@@ -8,6 +8,10 @@ func connectionIniator(s *vici.Session){
 	for{
 		select{
 		case ike_start := <-ch_ike_to_start:
+			if ike_start.name == "" || ike_start.name == "(unnamed)" {
+				log.Printf("Ignoring unnamed IKE\n")
+				continue
+			}
 			if time.Since(ike_start.last_try) < (2 * time.Second) {
 				if ike_start.message_send == false {
 				log.Printf("IKE %s had last try at %d:%d:%d, waiting 2 seconds before restarting\n", ike_start.name,
