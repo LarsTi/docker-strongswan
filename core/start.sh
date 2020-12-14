@@ -7,6 +7,10 @@ else
         pubip="${PUBLIC_IP}"
 fi
 
+if [[ -z "${MASQUERADE_SUB}" ]]; then
+	echo "No Masquerading of Home Network requested"
+	echo "This can be a problem on the routing! Take CARE!"
+fi
 echo "Expecting 2 IPs (public ip and internal IP)"
 ip1="$(hostname -i | awk '{ print $1}' )"
 ip2="$(hostname -i | awk '{ print $2}' )"
@@ -27,6 +31,14 @@ if [[ -z "$ip1" || -z "$ip2" ]]; then
 	echo "This is not recoverable!"
 	exit 1
 fi 
+subnet="$(ip route | grep $me | awk '{print $1}')"
+echo "Found subnet $subnet for private ip $me"
+if [[ -z "$MASQUERADE_SUB" ]]; then
+	echo "Not Masquerading"
+else
+	echo "Masquerading all Traffic not coming from internal network $subnet, so you can ping it!"
+	iptables --table nat --append POSTROUTING ! --source $subnet --jump MASQUERADE
+fi
 echo "Setting up NAT so strongswan can use the public ip without caring about routing"
 iptables --table nat --insert PREROUTING --destination $me --jump DNAT --to-destination $pubip
 
