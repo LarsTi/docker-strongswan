@@ -2,3 +2,5 @@
 docker-compose.yaml
 #Ignoring open files:
 *.swp
+#Ignoring config folder!
+config
