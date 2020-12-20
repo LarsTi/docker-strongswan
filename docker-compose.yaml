@@ -24,6 +24,7 @@ services:
                                 ipv4_address: 172.16.250.50
                         public:
                                 ipv4_address: {{publicIP}}
+
 networks:
         default:
                 ipam:
