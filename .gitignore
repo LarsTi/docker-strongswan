@@ -1,5 +1,5 @@
 #Ignoring docker-compose files
-docker-compose.yaml
+/docker-compose.yaml
 #Ignoring open files:
 *.swp
 #Ignoring config folder!

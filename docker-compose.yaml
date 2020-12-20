@@ -8,7 +8,6 @@ services:
                         - "/etc/timezone:/etc/timezone:ro"
                         - "/etc/localtime:/etc/localtime:ro"
                         - "./_volumes/vici_socket:/var/run"
-#                        - "./swanctl.conf:/etc/swanctl/swanctl.conf:ro" #you might want to load this!
                         - "./core/charon.conf:/etc/strongswan.d/charon.conf:ro"
                 environment:
                         - PUBLIC_IP={{publicIP}}
