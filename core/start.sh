@@ -24,7 +24,6 @@ else
 	echo "Setting retransmit_tries"
 	sed -i -r 's/.*retransmit_tries = .+/  retransmit_tries = '$RETRANSMIT_TRIES'/' /etc/strongswan.d/charon.conf
 fi
-cat /etc/strongswan.d/charon.conf | grep retransmit
 echo "finished Charon Conf"
 
 if [[ -z "${PUBLIC_IP}" ]]; then
