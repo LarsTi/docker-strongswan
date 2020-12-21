@@ -1,4 +1,8 @@
 #Ignoring docker-compose files
 docker-compose.yaml
+docker-compose.yml
 #Ignoring open files:
 *.swp
+#Ignoring config folder!
+config
+_volumes

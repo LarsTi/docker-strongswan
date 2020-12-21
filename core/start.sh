@@ -1,5 +1,32 @@
 #!/bin/bash
 
+if [[ -z "${RETRANSMIT_BASE}" ]]; then
+	echo "Using default retransmit_base"
+else
+	echo "Setting retransmit_base"
+	sed -i -r 's/.*retransmit_base = .+/  retransmit_base = '$RETRANSMIT_BASE'/' /etc/strongswan.d/charon.conf
+fi
+if [[ -z "${RETRANSMIT_LIMIT}" ]];then
+	echo "Using default retransmit_limit"
+else
+	echo "Setting retransmit_limit"
+	sed -i -r 's/.*retransmit_limit = .+/  retransmit_limit = '$RETRANSMIT_LIMITi'/' /etc/strongswan.d/charon.conf
+fi
+if [[ -z "${RETRANSMIT_TIMEOUT}" ]];then
+	echo "Using default retransmit_timeout"
+else
+	echo "Setting retransmit_timeout"
+	sed -i -r 's/.*retransmit_timeout = .+/  retransmit_timeout = '$RETRANSMIT_TIMEOUT'/' /etc/strongswan.d/charon.conf
+fi
+if [[ -z "${RETRANSMIT_TRIES}" ]];then
+	echo "Using default retransmit_tries"
+else
+	echo "Setting retransmit_tries"
+	sed -i -r 's/.*retransmit_tries = .+/  retransmit_tries = '$RETRANSMIT_TRIES'/' /etc/strongswan.d/charon.conf
+fi
+
+echo "finished Charon Conf"
+
 if [[ -z "${PUBLIC_IP}" ]]; then
         echo "Please set env variable \"PUBLIC_IP\" to an IP!"
         exit 1
