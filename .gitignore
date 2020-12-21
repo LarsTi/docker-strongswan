@@ -5,3 +5,4 @@ docker-compose.yml
 *.swp
 #Ignoring config folder!
 config
+_volumes

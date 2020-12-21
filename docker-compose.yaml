@@ -8,9 +8,12 @@ services:
                         - "/etc/timezone:/etc/timezone:ro"
                         - "/etc/localtime:/etc/localtime:ro"
                         - "./_volumes/vici_socket:/var/run"
-                        - "./core/charon.conf:/etc/strongswan.d/charon.conf:ro"
                 environment:
-                        - PUBLIC_IP={{publicIP}}
+                        - "PUBLIC_IP={{publicIP}}"
+                        - "RETRANSMIT_BASE=1"
+                        - "RETRANSMIT_LIMIT=5"
+                        - "RETRANSMIT_TIMEOUT=5.0"
+                        - "RETRANSMIT_TRIES=5"
                 cap_add:
                         - NET_ADMIN
                         - SYS_ADMIN
