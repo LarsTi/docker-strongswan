@@ -30,19 +30,19 @@ func connectionIniator(s *vici.Session){
 			//IKE neu starten (erst IKE, dann Child)
 			//initiate(s, ike_start.name, true)
 			log.Printf("Got Ike to Start %s\n", ike_start.name)
-			b := initiate(s, ike_start.name, false)
-			if b == true {
-				log.Printf("[%s] went up in connection Initiator\n", ike_start.name)
-			}else{
-				log.Printf("[%s]Initiate was issued but did not work!\n", ike_start.name)
-				ike := ike_to_start {
-					name: ike_start.name,
-					isIke: ike_start.isIke,
-					message_send: false,
-					last_try: time.Now(),
-				}
-				ch_ike_to_start <- ike
-			}
+			//b := initiate(s, ike_start.name, false)
+			//if b == true {
+			//	log.Printf("[%s] went up in connection Initiator\n", ike_start.name)
+			//}else{
+			//	log.Printf("[%s]Initiate was issued but did not work!\n", ike_start.name)
+			//	ike := ike_to_start {
+			//		name: ike_start.name,
+			//		isIke: ike_start.isIke,
+			//		message_send: false,
+			//		last_try: time.Now(),
+			//	}
+			//	ch_ike_to_start <- ike
+			//}
 
 		}
 	}

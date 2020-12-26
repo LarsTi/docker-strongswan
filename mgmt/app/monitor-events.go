@@ -46,7 +46,7 @@ func monitorConns(s *vici.Session){
 					log.Printf("A child of IKE %s is up\n", v)
 				}else{
 					log.Printf("A child of IKE %s went down, terminating IKE", v)
-					terminate(s,v, true)
+					//terminate(s,v, true)
 				}
 			}
 		}
