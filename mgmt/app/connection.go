@@ -113,3 +113,29 @@ func loadConn(v *viciStruct, path string) (loadConnection, error){
 	}
 	return c, nil
 }
+func listSAs(v *viciStruct)([]loadedIKE, error){
+	var retVar []loadedIKE
+	v.startCommand()
+	msgs, err := v.session.StreamedCommandRequest("list-sas", "list-sa", nil)
+	v.endCommand(err)
+	if err != nil {
+		return retVar, err
+	}
+	for _,m := range msgs.Messages() {
+		if e := m.Err(); e != nil{
+			//ignoring this error
+			continue
+		}
+		for _, k := range m.Keys() {
+			inbound := m.Get(k).(*vici.Message)
+			var ike loadedIKE
+			if e := vici.UnmarshalMessage(inbound, &ike); e != nil {
+				//ignoring this marshal/unmarshal errro!
+				continue
+			}
+			retVar = append(retVar, ike)
+
+		}
+	}
+	return retVar, nil
+}

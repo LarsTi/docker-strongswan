@@ -53,8 +53,10 @@ func main() {
         }
 	go connectionIniator(s)
         go monitorConns(s)
+	go runPrometheus(v)
 	for {
 		time.Sleep(1 * time.Second)
+		listSAs(v)
 	}
 }
 
