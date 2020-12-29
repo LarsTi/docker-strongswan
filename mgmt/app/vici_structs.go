@@ -1,7 +1,6 @@
 package main
 import (
 	"time"
-	"fmt"
 	"github.com/strongswan/govici/vici"
 )
 type viciStruct struct {
@@ -22,7 +21,6 @@ func (v *viciStruct) endCommand(hasError error ){
 	}
 	v.execDuraAvgMs = ( v.execDuraAvgMs * v.counterCommands + v.execDuraLast.Milliseconds() ) / ( v.counterCommands + 1)
 	v.counterCommands ++
-	fmt.Println(v)
 }
 type sharedSecret struct{
 	Id		string			`vici:"id"`
