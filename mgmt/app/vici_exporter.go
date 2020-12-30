@@ -9,8 +9,8 @@ type ViciCollector struct {
 	cntCommands		*prometheus.Desc
 	cntErrors		*prometheus.Desc
 	lastCommandSec		*prometheus.Desc
-	execDuraLastMilliSec	*prometheus.Desc
-	execDuraAvgMilliSec	*prometheus.Desc
+	execDuraLastNanoSec	*prometheus.Desc
+	execDuraAvgNanoSec	*prometheus.Desc
 }
 func NewViciCollector(v *viciStruct) *ViciCollector {
 	ns := "vici_"
@@ -32,14 +32,14 @@ func NewViciCollector(v *viciStruct) *ViciCollector {
 			"Time ellapsed since last command was issued in seconds",
 			nil, nil,
 		),
-		execDuraLastMilliSec: prometheus.NewDesc(
-			ns+"execution_milliseconds_last",
-			"Milliseconds the last command took to execute",
+		execDuraLastNanoSec: prometheus.NewDesc(
+			ns+"execution_nanoseconds_last",
+			"Nanoseconds the last command took to execute",
 			nil, nil,
 		),
-		execDuraAvgMilliSec: prometheus.NewDesc(
-			ns+"execution_milliseconds_avg",
-			"Milliseconds the average command tooks to execute during this vici session",
+		execDuraAvgNanoSec: prometheus.NewDesc(
+			ns+"execution_nanoseconds_avg",
+			"Nanoseconds the average command tooks to execute during this vici session",
 			nil, nil,
 		),
 	}
@@ -51,8 +51,8 @@ func (c *ViciCollector) Describe (ch chan<- *prometheus.Desc){
 	ch <- c.cntCommands
 	ch <- c.cntErrors
 	ch <- c.lastCommandSec
-	ch <- c.execDuraLastMilliSec
-	ch <- c.execDuraAvgMilliSec
+	ch <- c.execDuraLastNanoSec
+	ch <- c.execDuraAvgNanoSec
 }
 func (c *ViciCollector) Collect (ch chan<- prometheus.Metric) {
 	ch <- prometheus.MustNewConstMetric(
@@ -72,12 +72,12 @@ func (c *ViciCollector) Collect (ch chan<- prometheus.Metric) {
 		float64(time.Since(c.vici.lastCommand).Seconds()), //Value
 	)
 	ch <- prometheus.MustNewConstMetric(
-		c.execDuraLastMilliSec, //Description
+		c.execDuraLastNanoSec, //Description
 		prometheus.GaugeValue, //Type
-		float64(c.vici.execDuraLast.Milliseconds()), //Value
+		float64(c.vici.execDuraLast.Nanoseconds()), //Value
 	)
 	ch <- prometheus.MustNewConstMetric(
-		c.execDuraAvgMilliSec, //Description
+		c.execDuraAvgNanoSec, //Description
 		prometheus.GaugeValue, //Type
 		float64(c.vici.execDuraAvgMs), //Value
 	)

@@ -19,7 +19,7 @@ func (v *viciStruct) endCommand(hasError error ){
 	if hasError != nil {
 		v.counterErrors ++
 	}
-	v.execDuraAvgMs = ( v.execDuraAvgMs * v.counterCommands + v.execDuraLast.Milliseconds() ) / ( v.counterCommands + 1)
+	v.execDuraAvgMs = ( v.execDuraAvgMs * v.counterCommands + v.execDuraLast.Nanoseconds() ) / ( v.counterCommands + 1)
 	v.counterCommands ++
 }
 type sharedSecret struct{
