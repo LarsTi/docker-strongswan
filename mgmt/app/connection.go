@@ -133,6 +133,7 @@ func listSAs(v *viciStruct)([]loadedIKE, error){
 				//ignoring this marshal/unmarshal errro!
 				continue
 			}
+			ike.Name = k
 			retVar = append(retVar, ike)
 
 		}
