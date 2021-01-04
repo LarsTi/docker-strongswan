@@ -69,7 +69,7 @@ type loadedIKE struct {
 	EstablishSec	int64			`vici:"established"`
 	RekeySec	int64			`vici:"rekey-time"`
 	ReauthSec	int64			`vici:"reauth-time"`
-	Children	map[string]loadedChild `vici:"child-sas"`
+	Children	map[string]loadedChild	`vici:"child-sas"`
 }
 type loadedChild struct {
 	Name		string			`vici:"name"`

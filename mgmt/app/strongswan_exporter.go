@@ -188,6 +188,11 @@ func (c *StrongswanCollector) Describe (ch chan<- *prometheus.Desc){
 func (c *StrongswanCollector) Collect (ch chan<- prometheus.Metric) {
 	data, err := listSAs(c.vici)
 	if err != nil {
+		ch <- prometheus.MustNewConstMetric(
+			c.ikeCnt, //Description
+			prometheus.GaugeValue, //Type
+			float64(0), //Value
+		)
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(

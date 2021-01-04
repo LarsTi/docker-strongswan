@@ -112,7 +112,6 @@ func loadConn(v *viciStruct, path string) (loadConnection, error){
 		return c, err
 	}
 	return c, nil
-}
 func listSAs(v *viciStruct)([]loadedIKE, error){
 	var retVar []loadedIKE
 	v.startCommand()
@@ -139,4 +138,5 @@ func listSAs(v *viciStruct)([]loadedIKE, error){
 		}
 	}
 	return retVar, nil
+}
 }
