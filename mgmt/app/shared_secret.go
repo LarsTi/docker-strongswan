@@ -1,85 +1,72 @@
 package main
 
 import (
-        "log"
+        "fmt"
         "github.com/strongswan/govici/vici"
 )
-type secret struct {    
-        Id              string          `vici:"id"`
-        Typ             string          `vici:"type"`
-        Data            string          `vici:"data"`
-        Owners          []string        `vici:"owners"`
-}
-func countSecrets(s *vici.Session) int {
-        loaded, e := s.CommandRequest("get-shared", nil)
-        if e != nil {
-                log.Panicln(e)
-                return 0
+func countSecrets(v *viciStruct) (int, error) {
+        v.startCommand()
+	loaded, e := v.session.CommandRequest("get-shared", nil)
+        v.endCommand(e)
+	if e != nil {
+                return 0, fmt.Errorf("[get-shared] %s\n", e)
         }
 	
-	return len(loaded.Get("keys").([]string))
+	return len(loaded.Get("keys").([]string)), nil
 }
-func isSecretLoaded(s *vici.Session, secretId string) bool{
-        loaded, e := s.CommandRequest("get-shared", nil)
+func isSecretLoaded(v *viciStruct, secretId string) (bool, error){
+	v.startCommand()
+        loaded, e := v.session.CommandRequest("get-shared", nil)
+	v.endCommand(e)
         if e != nil {
-                log.Println("Can not read loaded secretes from charon")
-                log.Panicln(e)
-                return false
+                return false, fmt.Errorf("[get-shared] %s\n", e)
         }
         for _, value := range loaded.Get("keys").([]string){
                 if value == secretId {
-                        //log.Printf("Secret %s is loaded\n", secretId)
-                        return true
+                        return true, nil
                 }
         }
-        //log.Printf("Secret %s is not loaded\n", secretId)
-        return false
+        return false, nil
 }
-func unloadSecret(s *vici.Session, secretId string) bool{
-        log.Printf("Unloading Secret %s\n", secretId)
+func unloadSecret(v *viciStruct, secretId string) error{
         m := vici.NewMessage()
         if err := m.Set("id", secretId); err != nil {
-                log.Println("Could not create Unload-Shared-Secret Message")
-                log.Panicln(err)
-                return false
+                return fmt.Errorf("[unload-shared] %s\n", err)
         }
-        _, e := s.CommandRequest("unload-shared", m)
+        v.startCommand()
+	_, e := v.session.CommandRequest("unload-shared", m)
+	v.endCommand(e)
         if e != nil {
-                log.Println("Could not unload Secret")
-                log.Panicln(e)
-                return false
+                return fmt.Errorf("[unload-shared] %s\n", e)
         }
-        //fmt.Printf("Unloaded Secret %s\n", secretId)
-        return true
+        return nil
 
 }
-func loadSharedSecret(s *vici.Session, path string) bool{
-        psk := secret{
+func loadSharedSecret(v *viciStruct, path string) error{
+        psk := sharedSecret{
                 Id: getStringValueFromPath(path, "RemoteAddrs"),
                 Typ: "IKE",
                 Data: getStringValueFromPath(path, "PSK"),
                 Owners: getStringArrayFromPath(path, "RemoteAddrs"),
         }
 	if psk.Data == "" {
-		log.Printf("Secret in file %s is no PSK\n", path)
-		return false
+		return fmt.Errorf("Secret in file %s is no PSK\n", path)
 	}
-        log.Printf("Loading SharedSecret for %s from path %s\n", psk.Id, path)
-        if isSecretLoaded(s, psk.Id) {
-                log.Println("Secret existed, reloading it now!")
-                unloadSecret(s, psk.Id)
+	isLoaded, err := isSecretLoaded(v, psk.Id)
+	if err != nil {
+		return err
+	}else if isLoaded {
+                unloadSecret(v, psk.Id)
         }
-        m,err := vici.MarshalMessage(psk)
+        m, err := vici.MarshalMessage(psk)
         if err != nil {
-                log.Panicf("[%s]%s",path, err)
-                return false
+                return fmt.Errorf("[%s] %s\n",path, err)
         }
-
-        _, err2 := s.CommandRequest("load-shared", m)
+	v.startCommand()
+        _, err2 := v.session.CommandRequest("load-shared", m)
+	v.endCommand(err2)
         if err2 != nil {
-                log.Printf("Could not load PSK %s\n", psk.Id)
-                log.Panicln(err2)
-                return false
+                return fmt.Errorf("[%s] %s\n", path, err2)
         }
-        return isSecretLoaded(s, psk.Id)
+        return nil
 }

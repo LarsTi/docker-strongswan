@@ -1,5 +1,14 @@
 #!/bin/bash
+echo -e """ possible ENV-Vars
+\t RETRANSMIT_BASE --> charon.conf
+\t RETRANSMIT_LIMIT --> charon.conf
+\t RETRANSMIT_TIMEOUT --> charon.conf
+\t RETRANSMIT_TRIES --> charon.conf
 
+\t PUBLIC_IP --> Routing / strongswan
+\t MASQUERADE_SUB --> Routing / inner-VPN-Communication
+
+Proceeding with protocol"""
 if [[ -z "${RETRANSMIT_BASE}" ]]; then
 	echo "Using default retransmit_base"
 else
@@ -73,4 +82,5 @@ iptables --table nat --insert POSTROUTING --source $pubip --jump SNAT --to-sourc
 
 echo "Finished Natting"
 
-/usr/libexec/ipsec/charon --debug-ike 1 --debug-cfg 1 --debug-mgr 2
+echo "Finished Startup - Starting charon now!"
+/usr/libexec/ipsec/charon --debug-ike 0 --debug-cfg 1 --debug-mgr 1 --debug-enc 0 --debug-net 0 --debug-chd 1
