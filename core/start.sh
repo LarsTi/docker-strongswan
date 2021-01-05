@@ -70,22 +70,23 @@ if [[ -z "$ip1" || -z "$ip2" ]]; then
 fi 
 subnet="$(ip route | grep $me | awk '{print $1}')"
 echo "Found subnet $subnet for private ip $me"
-if [[ -z "$MASQUERADE_SUB" ]]; then
+if [[ -z "${MASQUERADE_SUB}" ]]; then
 	echo "Not Masquerading"
 else
 	echo "Masquerading all Traffic not coming from internal network $subnet, so you can ping it!"
 	iptables --table nat --append POSTROUTING ! --source $subnet --jump MASQUERADE
 fi
-if [[ -z "VPN_GATEWAY" ]]; then
+if [[ -z "${VPN_GATEWAY}" ]]; then
 	echo "Not setting vpn-gateway, ensure you can reach all networks from this container!"
 else
-	cmd="ip route add 10.0.0.0/8 via $VPN_GATEWAY"
+	vpngw="${VPN_GATEWAY}"
+	cmd="ip route add 10.0.0.0/8 via $vpngw"
 	rc="$($cmd)"
 	echo "return code for Command $cmd: $rc"
-	cmd="ip route add 172.16.0.0/12 via $VPN_GATEWAY"
+	cmd="ip route add 172.16.0.0/12 via $vpngw"
 	rc="$($cmd)"
 	echo "return code for Command $cmd: $rc"
-	cmd="ip route add 192.168.0.0/16 via $VPN_GATEWAY"
+	cmd="ip route add 192.168.0.0/16 via $vpngw"
 	rc="$($cmd)"
 	echo "return code for Command $cmd: $rc"
 fi
