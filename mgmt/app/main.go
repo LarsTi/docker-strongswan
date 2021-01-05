@@ -12,7 +12,9 @@ type ike_to_start struct {
 	message_send		bool
         last_try		time.Time
 }
+var saNameSuffix string
 func main() {
+	saNameSuffix = "-net"
 	start := time.Now()
         s, err := vici.NewSession()
 	end := time.Now()
@@ -51,8 +53,7 @@ func main() {
 			log.Printf("[%s] connection loaded successful\n", f)
 		}
         }
-	go connectionIniator(s)
-        go monitorConns(s)
+        go monitorConns(v)
 	go runPrometheus(v)
 	for {
 		time.Sleep(1 * time.Second)

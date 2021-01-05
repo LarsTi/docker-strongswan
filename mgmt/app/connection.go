@@ -11,7 +11,7 @@ func connectionFromFile(path string) (loadConnection, error){
 		RemoteAddrs: getStringArrayFromPath(path, "RemoteAddrs"),
 		Local: AuthOpts { Auth: "psk", ID: getStringValueFromPath("me", "RemoteAddrs"), },
 		Remote: AuthOpts { Auth: "psk", ID: getStringValueFromPath(path, "RemoteAddrs"), },
-		ChildName: path + "-net",
+		ChildName: path + saNameSuffix,
 		Children: make(map[string]ChildSA),
 		Version: getIntValueFromPath(path, "Version"),
 		Proposals: getStringArrayFromPath(path, "proposals"),
@@ -48,9 +48,6 @@ func (c loadConnection) loadConnection(v *viciStruct) error {
 	}
 	m := vici.NewMessage()
 	m.Set(c.Name, msg)
-	fmt.Println(msg)
-	fmt.Println(m)
-	fmt.Println(c.Children[c.ChildName])
 	v.startCommand()
 	_, e := v.session.CommandRequest("load-conn", m)
 	v.endCommand(e)
@@ -112,6 +109,7 @@ func loadConn(v *viciStruct, path string) (loadConnection, error){
 		return c, err
 	}
 	return c, nil
+}
 func listSAs(v *viciStruct)([]loadedIKE, error){
 	var retVar []loadedIKE
 	v.startCommand()
@@ -138,5 +136,4 @@ func listSAs(v *viciStruct)([]loadedIKE, error){
 		}
 	}
 	return retVar, nil
-}
 }
