@@ -7,6 +7,7 @@ echo -e """ possible ENV-Vars
 
 \t PUBLIC_IP --> Routing / strongswan
 \t MASQUERADE_SUB --> Routing / inner-VPN-Communication
+\t VPN_GATEWAY --> Routing / inner-VPN-Communication --> Will be the host for all private networks!
 
 Proceeding with protocol"""
 if [[ -z "${RETRANSMIT_BASE}" ]]; then
@@ -69,11 +70,25 @@ if [[ -z "$ip1" || -z "$ip2" ]]; then
 fi 
 subnet="$(ip route | grep $me | awk '{print $1}')"
 echo "Found subnet $subnet for private ip $me"
-if [[ -z "$MASQUERADE_SUB" ]]; then
+if [[ -z "${MASQUERADE_SUB}" ]]; then
 	echo "Not Masquerading"
 else
 	echo "Masquerading all Traffic not coming from internal network $subnet, so you can ping it!"
 	iptables --table nat --append POSTROUTING ! --source $subnet --jump MASQUERADE
+fi
+if [[ -z "${VPN_GATEWAY}" ]]; then
+	echo "Not setting vpn-gateway, ensure you can reach all networks from this container!"
+else
+	vpngw="${VPN_GATEWAY}"
+	cmd="ip route add 10.0.0.0/8 via $vpngw"
+	rc="$($cmd)"
+	echo "return code for Command $cmd: $rc"
+	cmd="ip route add 172.16.0.0/12 via $vpngw"
+	rc="$($cmd)"
+	echo "return code for Command $cmd: $rc"
+	cmd="ip route add 192.168.0.0/16 via $vpngw"
+	rc="$($cmd)"
+	echo "return code for Command $cmd: $rc"
 fi
 echo "Setting up NAT so strongswan can use the public ip without caring about routing"
 iptables --table nat --insert PREROUTING --destination $me --jump DNAT --to-destination $pubip
