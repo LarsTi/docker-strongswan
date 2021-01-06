@@ -5,13 +5,9 @@ import (
         "time"
 )
 //up to 100 ikes queued
-var ch_ike_to_start = make(chan ike_to_start, 100)
-type ike_to_start struct {
-        name			string
-        isIke			bool
-	message_send		bool
-        last_try		time.Time
-}
+var ch_ike_to_start = make(chan string, 100)
+var ikesInSystem []string
+
 var saNameSuffix string
 func main() {
 	saNameSuffix = "-net"
@@ -51,6 +47,7 @@ func main() {
 			log.Printf("[%s] connection not loaded: %s\n", f, err)
 		}else{
 			log.Printf("[%s] connection loaded successful\n", f)
+			append(ikesInSystem, f)
 		}
         }
         go monitorConns(v)

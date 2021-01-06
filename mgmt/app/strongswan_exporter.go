@@ -7,6 +7,7 @@ type StrongswanCollector struct {
 	vici			*viciStruct
 	namespace		string
 	ikeCnt			*prometheus.Desc
+	ikeConnCnt		*prometheus.Desc
 	ikeVersion		*prometheus.Desc
 	ikeState		*prometheus.Desc
 	ikeInitiator		*prometheus.Desc
@@ -39,6 +40,11 @@ func NewStrongswanCollector(v *viciStruct) *StrongswanCollector {
 		vici: v,
 		namespace: ns,
 		ikeCnt: prometheus.NewDesc(
+			ns+"number_of_ikes_connected",
+			"Number of known IKEs",
+			nil, nil,
+		),
+		ikeConnCnt: prometheus.NewDesc(
 			ns+"number_of_ikes_connected",
 			"Number of temporary connected IKEs",
 			nil, nil,
@@ -173,6 +179,7 @@ func (c *StrongswanCollector) init(){
 }
 func (c *StrongswanCollector) Describe (ch chan<- *prometheus.Desc){
 	ch <- c.ikeCnt
+	ch <- c.ikeConnCnt
 	ch <- c.ikeVersion
 	ch <- c.ikeState
 	ch <- c.ikeInitiator
@@ -186,17 +193,27 @@ func (c *StrongswanCollector) Describe (ch chan<- *prometheus.Desc){
 	ch <- c.ikeChildren
 }
 func (c *StrongswanCollector) Collect (ch chan<- prometheus.Metric) {
+	noOfKnownIkes := 0
+	if len(ikesInSystem) > 0 {
+		noOfKnownIkes = len(ikesInSystem)
+	}
+	ch <- promehteus.MustNewConstMetric(
+		c.ikeCnt, //Description
+		prometheus.GaugeValue, //Type
+		float64(noOfKnownIkes), //value
+	)
+
 	data, err := listSAs(c.vici)
 	if err != nil {
 		ch <- prometheus.MustNewConstMetric(
-			c.ikeCnt, //Description
+			c.ikeConnCnt, //Description
 			prometheus.GaugeValue, //Type
 			float64(0), //Value
 		)
 		return
 	}
 	ch <- prometheus.MustNewConstMetric(
-		c.ikeCnt, //Description
+		c.ikeConnCnt, //Description
 		prometheus.GaugeValue, //Type
 		float64(len(data)), //Value
 	)
