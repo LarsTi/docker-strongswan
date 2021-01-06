@@ -48,12 +48,14 @@ func main() {
                         log.Println("me is not a valid Connection, but a SharedSecret!")
                         continue
                 }
+		
+		ikesInSystem = append(ikesInSystem, f)
+
 		_, err := loadConn(v, f)
 		if err != nil {
 			log.Printf("[%s] connection not loaded: %s\n", f, err)
 		}else{
 			log.Printf("[%s] connection loaded successful\n", f)
-			ikesInSystem = append(ikesInSystem, f)
 		}
         }
 
