@@ -5,7 +5,7 @@ import (
         "time"
 )
 //up to 100 ikes queued
-var ch_ike_to_start = make(chan string, 100)
+var ch_ike_to_check = make(chan string, 100)
 var ikesInSystem []string
 
 var saNameSuffix string
@@ -47,14 +47,11 @@ func main() {
 			log.Printf("[%s] connection not loaded: %s\n", f, err)
 		}else{
 			log.Printf("[%s] connection loaded successful\n", f)
-			append(ikesInSystem, f)
+			ikesInSystem = append(ikesInSystem, f)
 		}
         }
         go monitorConns(v)
 	go runPrometheus(v)
-	for {
-		time.Sleep(1 * time.Second)
-		listSAs(v)
-	}
+	watchIkes(v)
 }
 

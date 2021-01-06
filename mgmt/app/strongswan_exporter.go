@@ -40,7 +40,7 @@ func NewStrongswanCollector(v *viciStruct) *StrongswanCollector {
 		vici: v,
 		namespace: ns,
 		ikeCnt: prometheus.NewDesc(
-			ns+"number_of_ikes_connected",
+			ns+"number_of_known_ikes",
 			"Number of known IKEs",
 			nil, nil,
 		),
@@ -197,7 +197,7 @@ func (c *StrongswanCollector) Collect (ch chan<- prometheus.Metric) {
 	if len(ikesInSystem) > 0 {
 		noOfKnownIkes = len(ikesInSystem)
 	}
-	ch <- promehteus.MustNewConstMetric(
+	ch <- prometheus.MustNewConstMetric(
 		c.ikeCnt, //Description
 		prometheus.GaugeValue, //Type
 		float64(noOfKnownIkes), //value
