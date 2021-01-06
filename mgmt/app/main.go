@@ -3,6 +3,8 @@ import (
         "log"
         "github.com/strongswan/govici/vici"
         "time"
+	"net/http"
+	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
 //up to 100 ikes queued
 var ch_ike_to_check = make(chan string, 100)
@@ -11,6 +13,8 @@ var ikesInSystem []string
 var saNameSuffix string
 func main() {
 	saNameSuffix = "-net"
+	
+	//Initializing vici
 	start := time.Now()
         s, err := vici.NewSession()
 	end := time.Now()
@@ -26,8 +30,10 @@ func main() {
 		execDuraLast: end.Sub(start),
 		execDuraAvgMs: end.Sub(start).Milliseconds(),
 	}
-
+	
 	log.Println("Vici loaded, starting operations")
+	
+	//Initializing Connectiosn
 	a := getFiles()
         for _, f := range a {
 		e := loadSharedSecret(v, f)
@@ -50,8 +56,17 @@ func main() {
 			ikesInSystem = append(ikesInSystem, f)
 		}
         }
+
+	//Initializing Collectors for Prometheus:
+	strongswanCollector := NewStrongswanCollector(v)
+	strongswanCollector.init()
+	http.Handle("/metrics", promhttp.Handler())
+
+	//Starting monitoring Threads:
         go monitorConns(v)
-	go runPrometheus(v)
-	watchIkes(v)
+	go watchIkes(v)
+
+	//Running Prometheus (blocking):
+	log.Fatalln(http.ListenAndServe(":8080", nil))
 }
 

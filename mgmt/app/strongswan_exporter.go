@@ -2,10 +2,18 @@ package main
 import (
 	"github.com/prometheus/client_golang/prometheus"
 	"strings"
+	"time"
 )
 type StrongswanCollector struct {
 	vici			*viciStruct
 	namespace		string
+
+	viciCntCommands		*prometheus.Desc
+	viciCntErrors		*prometheus.Desc
+	viciLastCommandSec	*prometheus.Desc
+	viciExecLastNanoSec	*prometheus.Desc
+	viciExecAvgNanoSec	*prometheus.Desc
+
 	ikeCnt			*prometheus.Desc
 	ikeConnCnt		*prometheus.Desc
 	ikeVersion		*prometheus.Desc
@@ -39,6 +47,33 @@ func NewStrongswanCollector(v *viciStruct) *StrongswanCollector {
 	return &StrongswanCollector{
 		vici: v,
 		namespace: ns,
+
+		viciCntCommands: prometheus.NewDesc(
+			ns+"vici_command_count",
+			"Number of totally send commands",
+			nil, nil,
+		),
+		viciCntErrors: prometheus.NewDesc(
+			ns+"vici_error_count",
+			"Number of commands which returned an error",
+			nil, nil,
+		),
+		viciLastCommandSec: prometheus.NewDesc(
+			ns+"vici_seconds_since_last_command",
+			"Seconds since last command was issued",
+			nil, nil,
+		),
+		viciExecLastNanoSec: prometheus.NewDesc(
+			ns+"vici_execution_nanoseconds_last",
+			"Nanoseconds the last command execution took",
+			nil, nil,
+		),
+		viciExecAvgNanoSec: prometheus.NewDesc(
+			ns+"vici_execution_nanoseconds_avg",
+			"Average nanoseconds for command execution during this vici session",
+			nil, nil,
+		),
+
 		ikeCnt: prometheus.NewDesc(
 			ns+"number_of_known_ikes",
 			"Number of known IKEs",
@@ -178,6 +213,12 @@ func (c *StrongswanCollector) init(){
 	prometheus.MustRegister(c)
 }
 func (c *StrongswanCollector) Describe (ch chan<- *prometheus.Desc){
+	ch <- c.viciCntCommands
+	ch <- c.viciCntErrors
+	ch <- c.viciLastCommandSec
+	ch <- c.viciExecLastNanoSec
+	ch <- c.viciExecAvgNanoSec
+
 	ch <- c.ikeCnt
 	ch <- c.ikeConnCnt
 	ch <- c.ikeVersion
@@ -191,6 +232,21 @@ func (c *StrongswanCollector) Describe (ch chan<- *prometheus.Desc){
 	ch <- c.ikeRekeySecs
 	ch <- c.ikeReauthSecs
 	ch <- c.ikeChildren
+
+	ch <- c.saState
+	ch <- c.saEncap
+	ch <- c.saEncKeysize
+	ch <- c.saIntegKeysize
+	ch <- c.saBytesIn
+	ch <- c.saPacketsIn
+	ch <- c.saLastInSecs
+	ch <- c.saBytesOut
+	ch <- c.saPacketsOut
+	ch <- c.saLastOutSecs
+	ch <- c.saEstablishSecs
+	ch <- c.saRekeySecs
+	ch <- c.saLifetimeSecs
+
 }
 func (c *StrongswanCollector) Collect (ch chan<- prometheus.Metric) {
 	noOfKnownIkes := 0
@@ -202,6 +258,7 @@ func (c *StrongswanCollector) Collect (ch chan<- prometheus.Metric) {
 		prometheus.GaugeValue, //Type
 		float64(noOfKnownIkes), //value
 	)
+	c.collectViciMetrics(ch)
 
 	data, err := listSAs(c.vici)
 	if err != nil {
@@ -223,6 +280,33 @@ func (c *StrongswanCollector) Collect (ch chan<- prometheus.Metric) {
 			c.collectSaMetrics(v.Name,child, ch)
 		}
 	}
+}
+func (c *StrongswanCollector) collectViciMetrics(ch chan<- prometheus.Metric){
+	ch <- prometheus.MustNewConstMetric(
+		c.viciCntCommands, //Description
+		prometheus.CounterValue, //Type
+		float64(c.vici.counterCommands), //Value
+	)
+	ch <- prometheus.MustNewConstMetric(
+		c.viciCntErrors, //Description
+		prometheus.CounterValue, //Type
+		float64(c.vici.counterErrors), //Value
+	)
+	ch <- prometheus.MustNewConstMetric(
+		c.viciLastCommandSec, //Description
+		prometheus.GaugeValue, //Type
+		float64(time.Since(c.vici.lastCommand).Seconds()), //Value
+	)
+	ch <- prometheus.MustNewConstMetric(
+		c.viciExecLastNanoSec, //Description
+		prometheus.GaugeValue, //Type
+		float64(c.vici.execDuraLast.Nanoseconds()), //Value
+	)
+	ch <- prometheus.MustNewConstMetric(
+		c.viciExecAvgNanoSec, //Description
+		prometheus.GaugeValue, //Type
+		float64(c.vici.execDuraAvgMs), //Value
+	)
 }
 func (c *StrongswanCollector) collectIkeMetrics(d loadedIKE, ch chan<- prometheus.Metric){
 	ch <- prometheus.MustNewConstMetric(
