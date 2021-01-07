@@ -5,22 +5,30 @@ import (
 )
 type viciStruct struct {
 	session		*vici.Session
+	counterCommands int64
+	counterErrors	int64
+	lastCommand	time.Time
+	execDuraLast	time.Duration
+	execDuraAvgMs	int64
+}
+type ViciMetrics struct {
 	CounterCommands int64
 	CounterErrors	int64
 	LastCommand	time.Time
 	ExecDuraLast	time.Duration
-	ExecDuraAvgMs	int64
+	ExecDuraAvgNs	int64
+	LoadedSecrets	int64
 }
 func (v *viciStruct) startCommand(){
-	v.LastCommand = time.Now()
+	v.lastCommand = time.Now()
 }
 func (v *viciStruct) endCommand(hasError error ){
-	v.ExecDuraLast = time.Since(v.LastCommand)
+	v.execDuraLast = time.Since(v.lastCommand)
 	if hasError != nil {
-		v.CounterErrors ++
+		v.counterErrors ++
 	}
-	v.ExecDuraAvgMs = ( v.ExecDuraAvgMs * v.CounterCommands + v.ExecDuraLast.Nanoseconds() ) / ( v.CounterCommands + 1)
-	v.CounterCommands ++
+	v.execDuraAvgMs = ( v.execDuraAvgMs * v.counterCommands + v.execDuraLast.Nanoseconds() ) / ( v.counterCommands + 1)
+	v.counterCommands ++
 }
 type sharedSecret struct{
 	Id		string			`vici:"id"`

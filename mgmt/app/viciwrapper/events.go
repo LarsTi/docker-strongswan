@@ -6,6 +6,7 @@ import (
 	"fmt"
 )
 func monitorConns(v *viciStruct){
+	return
 	v.startCommand()
         if err := v.session.Subscribe("child-updown"); err != nil {
 		v.endCommand(err)
@@ -43,17 +44,61 @@ func monitorConns(v *viciStruct){
 
 	}
 }
+func watchIkes(v *viciStruct) {
+	log.Printf("[watch] Start watching for %d ikes\n", len(ikesInSystem))
+	ticker := time.NewTicker(20 * time.Second)
+
+	for {
+		select {
+			case ikeName := <-ch_ike_to_check:
+				ike,child,err := findIke(v, ikeName)
+				if ike == 1 && child == 1 && err == nil {
+					log.Printf("[watch] Ike %s is connected, check completed\n", ikeName)
+					continue
+				}else if err != nil{
+					reinitiateConn(v, ikeName)
+				}else if (ike > 1 || child > 1){
+					log.Printf("[watch] IKE %s (or child of IKE) is multiple times connected (Ike: %d, Child: %d\n", ikeName, ike, child)
+					log.Printf("[watch] Terminating IKE %s and rechecking it!\n", ikeName)
+					c, errC := connectionFromFile(ikeName)
+					if errC != nil {
+						log.Printf("[watch] [%s] %s\n", ikeName, errC)
+						continue
+					}
+					errT := c.terminate(v)
+					if errT != nil {
+						log.Printf("[watch] [%s] %s\n", ikeName, errC)
+						continue
+					}
+					log.Printf("[watch] IKE %s was terminated, so it should be able to be checked again. Requeuing it!\n", ikeName)
+					ch_ike_to_check <- ikeName
+				}
+			case <- ticker.C:
+				for _,ikeName := range ikesInSystem {
+					ch_ike_to_check <- ikeName
+				}
+		}
+	}
+}
+
 func reinitiateConn(v *viciStruct, ikeName string) (bool, error){
 	log.Printf("Received %s to restart\n", ikeName)
 	log.Printf("[%s] waiting 5 seconds, so we are sure!\n", ikeName)
 	time.Sleep(5 * time.Second)
 	log.Printf("[%s] checking if it was restarted\n", ikeName)
 	
-	foundIke, foundSA, errIke := findIke(v, ikeName)
+	ikeCnt,saCnt, errIke := findIke(v, ikeName)
 	if errIke != nil {
 		return false, fmt.Errorf("[%s] %s", ikeName, errIke)
 	}
-	
+	foundIke := false
+	foundSA := false
+	if ikeCnt == 1 {
+		foundIke = true
+	}
+	if saCnt == 1 {
+		foundSA = true
+	}
 	if foundIke == true && foundSA == false {
 		c, errC := connectionFromFile(ikeName)
 		if errC != nil {
@@ -83,9 +128,17 @@ func reinitiateConn(v *viciStruct, ikeName string) (bool, error){
 		return false, fmt.Errorf("[%s] is in an invalid and unrecoverable state!\n", ikeName)
 	}
 
-	foundIke, foundSA, errIke = findIke(v, ikeName)
+	ikeCnt,saCnt, errIke = findIke(v, ikeName)
 	if errIke != nil {
 		return false, fmt.Errorf("[%s] %s", ikeName, errIke)
+	}
+	foundIke = false
+	foundSA = false
+	if ikeCnt == 1 {
+		foundIke = true
+	}
+	if saCnt == 1 {
+		foundSA = true
 	}
 	if foundIke == true && foundSA == true {
 		log.Printf("[%s] is now connected!\n", ikeName)
@@ -96,46 +149,27 @@ func reinitiateConn(v *viciStruct, ikeName string) (bool, error){
 	}
 
 }
-func watchIkes(v *viciStruct) {
-	log.Printf("[watch] Start watching for %d ikes\n", len(ikesInSystem))
-	ticker := time.NewTicker(20 * time.Second)
-	for {
-		select {
-			case ikeName := <-ch_ike_to_check:
-				ike,child,err := findIke(v, ikeName)
-				if ike == true && child == true && err == nil {
-					log.Printf("[watch] Ike %s is connected, check completed\n", ikeName)
-					continue
-				}else{
-					reinitiateConn(v, ikeName)
-				}
-			case <- ticker.C:
-				for _,ikeName := range ikesInSystem {
-					ch_ike_to_check <- ikeName
-				}
-			default:
-				time.Sleep(1 * time.Second)
-		}
-	}
-}
-func findIke(v *viciStruct, ikeName string)(bool, bool, error){
+func findIke(v *viciStruct, ikeName string)(int, int, error){
 	ikes, err := listSAs(v)
 	if err != nil {
 		log.Fatalf("[%s] %s", ikeName, err)
-		return false, false, err
+		return 0,0, err
 	}
+	ikeCnt := 0
+	saCnt := 0
 	for _, ike := range ikes {
 		if ike.Name == ikeName {
 			//log.Printf("[%s] IKE is connected\n", ikeName)
+			ikeCnt ++
 		}else {
 			continue
 		}
 		if (len(ike.Children) > 0) {
+			saCnt ++
 			//log.Printf("[%s] SA is connected, nothing to do\n", ikeName)
-			return true, true, nil
 		}
-		return true, false, nil
 	}
-	return false, false, nil
+
+	return ikeCnt, saCnt, nil
 
 }

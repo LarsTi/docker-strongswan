@@ -1,6 +1,7 @@
 package viciwrapper
 import (
 	"github.com/strongswan/govici/vici"
+	"log"
 )
 type ViciWrapper struct {
 	ViciStruct		*viciStruct
@@ -29,6 +30,21 @@ func GetWrapper() (*ViciWrapper, error) {
 	me.ViciStruct.session = s
 
 	return me, nil
+}
+func (w *ViciWrapper) GetViciMetrics() ViciMetrics{
+	secrets, err := countSecrets(w.ViciStruct)
+	if err != nil {
+		log.Println(err)
+		secrets = 0
+	}
+	return ViciMetrics{
+		CounterCommands: w.ViciStruct.counterCommands,
+		CounterErrors: w.ViciStruct.counterErrors,
+		LastCommand: w.ViciStruct.lastCommand,
+		ExecDuraLast: w.ViciStruct.execDuraLast,
+		ExecDuraAvgNs: w.ViciStruct.execDuraAvgMs,
+		LoadedSecrets: int64(secrets),
+	}
 }
 func (w *ViciWrapper) ReadSecret(pathToFile string) error {
 	return loadSharedSecret(w.ViciStruct, pathToFile)
