@@ -1,4 +1,4 @@
-package main
+package filewrapper
 
 import (
         "fmt"
@@ -7,7 +7,7 @@ import (
         "os"
         "strconv"
 )
-func getFiles() []string{
+func getAllFiles() []string{
         var files []string
         f, err := os.Open("/app/config")
         if err != nil {
@@ -25,7 +25,26 @@ func getFiles() []string{
         }
         return files
 }
-func getStringValueFromPath(path string, value string) string{
+func GetFilesForSecrets() []string{
+	var files []string
+	for _, file := range getAllFiles() {
+		if strings.HasSuffix(file, ".secret"){
+			files = append(files, file)
+		}
+	}
+	return files
+}
+func GetFilesForConnections() []string{
+	var files []string
+	for _, file := range getAllFiles() {
+		if strings.HasSuffix(file, ".secret"){
+			continue
+		}
+		files = append(files, file)
+	}
+	return files
+}
+func GetStringValueFromPath(path string, value string) string{
         f, err := os.Open(strings.Join([]string{"/app","config",path}, "/"))
         if err != nil{
                 fmt.Println(err)
@@ -44,8 +63,8 @@ func getStringValueFromPath(path string, value string) string{
         }
         return "";
 }
-func getIntValueFromPath(path string, value string) int {
-        i, err := strconv.Atoi(getStringValueFromPath(path, value))
+func GetIntValueFromPath(path string, value string) int {
+        i, err := strconv.Atoi(GetStringValueFromPath(path, value))
         if err != nil {
                 fmt.Printf("Error in file %s, value %s\n", path, value)
                 fmt.Println(err)
@@ -53,6 +72,6 @@ func getIntValueFromPath(path string, value string) int {
         }
         return i
 }
-func getStringArrayFromPath(path string, value string) []string {
-        return strings.Split(getStringValueFromPath(path, value),",")
+func GetStringArrayFromPath(path string, value string) []string {
+        return strings.Split(GetStringValueFromPath(path, value),",")
 }

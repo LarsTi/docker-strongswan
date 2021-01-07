@@ -1,7 +1,8 @@
-package main
+package viciwrapper
 
 import (
         "fmt"
+	"../filewrapper"
         "github.com/strongswan/govici/vici"
 )
 func countSecrets(v *viciStruct) (int, error) {
@@ -44,10 +45,10 @@ func unloadSecret(v *viciStruct, secretId string) error{
 }
 func loadSharedSecret(v *viciStruct, path string) error{
         psk := sharedSecret{
-                Id: getStringValueFromPath(path, "RemoteAddrs"),
+                Id: filewrapper.GetStringValueFromPath(path, "RemoteAddrs"),
                 Typ: "IKE",
-                Data: getStringValueFromPath(path, "PSK"),
-                Owners: getStringArrayFromPath(path, "RemoteAddrs"),
+                Data: filewrapper.GetStringValueFromPath(path, "PSK"),
+                Owners: filewrapper.GetStringArrayFromPath(path, "RemoteAddrs"),
         }
 	if psk.Data == "" {
 		return fmt.Errorf("Secret in file %s is no PSK\n", path)

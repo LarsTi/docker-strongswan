@@ -1,11 +1,9 @@
-package main
+package viciwrapper
 import (
         "log"
         "context"
 	"time"
 	"fmt"
-	//"strings"
-        //"github.com/strongswan/govici/vici"
 )
 func monitorConns(v *viciStruct){
 	v.startCommand()

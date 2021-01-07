@@ -1,28 +1,29 @@
-package main
+package viciwrapper
 
 import (
         "fmt"
+	"../filewrapper"
         "github.com/strongswan/govici/vici"
 )
 func connectionFromFile(path string) (loadConnection, error){
 	ret := loadConnection{
 		Name: path,
-		LocalAddrs: getStringArrayFromPath(path, "LocalAddrs"),
-		RemoteAddrs: getStringArrayFromPath(path, "RemoteAddrs"),
-		Local: AuthOpts { Auth: "psk", ID: getStringValueFromPath("me", "RemoteAddrs"), },
-		Remote: AuthOpts { Auth: "psk", ID: getStringValueFromPath(path, "RemoteAddrs"), },
+		LocalAddrs: filewrapper.GetStringArrayFromPath(path, "LocalAddrs"),
+		RemoteAddrs: filewrapper.GetStringArrayFromPath(path, "RemoteAddrs"),
+		Local: AuthOpts { Auth: "psk", ID: filewrapper.GetStringValueFromPath("me", "RemoteAddrs"), },
+		Remote: AuthOpts { Auth: "psk", ID: filewrapper.GetStringValueFromPath(path, "RemoteAddrs"), },
 		ChildName: path + saNameSuffix,
 		Children: make(map[string]ChildSA),
-		Version: getIntValueFromPath(path, "Version"),
-		Proposals: getStringArrayFromPath(path, "proposals"),
+		Version: filewrapper.GetIntValueFromPath(path, "Version"),
+		Proposals: filewrapper.GetStringArrayFromPath(path, "proposals"),
 		DpdDelay: "2s",
 		Mobike: "no",
 		Encap: "yes",
 	}
 	ret.Children[ret.ChildName] = ChildSA{
-		LocalTS: getStringArrayFromPath(path, "LocalTrafficSelectors"),
-		RemoteTS: getStringArrayFromPath(path, "RemoteTrafficSelectors"),
-		Proposals: getStringArrayFromPath(path, "ESPProposals"),
+		LocalTS: filewrapper.GetStringArrayFromPath(path, "LocalTrafficSelectors"),
+		RemoteTS: filewrapper.GetStringArrayFromPath(path, "RemoteTrafficSelectors"),
+		Proposals: filewrapper.GetStringArrayFromPath(path, "ESPProposals"),
 	}
 
 	//TODO: check if everything is set!
@@ -110,8 +111,8 @@ func loadConn(v *viciStruct, path string) (loadConnection, error){
 	}
 	return c, nil
 }
-func listSAs(v *viciStruct)([]loadedIKE, error){
-	var retVar []loadedIKE
+func listSAs(v *viciStruct)([]LoadedIKE, error){
+	var retVar []LoadedIKE
 	v.startCommand()
 	msgs, err := v.session.StreamedCommandRequest("list-sas", "list-sa", nil)
 	v.endCommand(err)
@@ -125,7 +126,7 @@ func listSAs(v *viciStruct)([]loadedIKE, error){
 		}
 		for _, k := range m.Keys() {
 			inbound := m.Get(k).(*vici.Message)
-			var ike loadedIKE
+			var ike LoadedIKE
 			if e := vici.UnmarshalMessage(inbound, &ike); e != nil {
 				//ignoring this marshal/unmarshal errro!
 				continue
