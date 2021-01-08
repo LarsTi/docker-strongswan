@@ -6,6 +6,9 @@ import (
         "github.com/strongswan/govici/vici"
 )
 func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
+	if path == "" {
+		return loadConnection{}, fmt.Errof("[connection] Empty path not allowed")
+	}
 	ret := loadConnection{
 		Name: path,
 		LocalAddrs: filewrapper.GetStringArrayFromPath(path, "LocalAddrs"),
@@ -25,8 +28,15 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 		RemoteTS: filewrapper.GetStringArrayFromPath(path, "RemoteTrafficSelectors"),
 		Proposals: filewrapper.GetStringArrayFromPath(path, "ESPProposals"),
 	}
-
-	//TODO: check if everything is set!
+	if ret.Path == "" 
+		|| len(ret.LocalAddrs) == 0 || len(ret.RemoteAddrs) == 0
+		|| ret.Local.ID == "" || ret.Remote.ID == ""
+		|| ret.Version == 0 || len(ret.Proposals) == 0
+		|| len(ret.Children) == 0 || len(ret.Childnre[ret.ChildName].LocalTS) == 0
+		|| len(ret.Childnre[ret.ChildName].RemoteTS) == 0 || len(ret.Childnre[ret.ChildName].Proposals) == 0 {
+			//Präzisieren des Fehlers
+		return loadConnection{}, fmt.Errorf("[connection] There is an error in the connection")
+	}
 	return ret, nil
 }
 func (c loadConnection) unloadConnection(v *ViciWrapper) error {
