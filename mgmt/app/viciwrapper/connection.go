@@ -6,37 +6,57 @@ import (
         "github.com/strongswan/govici/vici"
 )
 func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
+	ret := loadConnection{}
 	if path == "" {
-		return loadConnection{}, fmt.Errof("[connection] Empty path not allowed")
+		return ret, fmt.Errorf("[connection] Empty path not allowed")
 	}
-	ret := loadConnection{
-		Name: path,
-		LocalAddrs: filewrapper.GetStringArrayFromPath(path, "LocalAddrs"),
-		RemoteAddrs: filewrapper.GetStringArrayFromPath(path, "RemoteAddrs"),
-		Local: AuthOpts { Auth: "psk", ID: filewrapper.GetStringValueFromPath("me.secret", "RemoteAddrs"), },
-		Remote: AuthOpts { Auth: "psk", ID: filewrapper.GetStringValueFromPath(path, "RemoteAddrs"), },
-		ChildName: path + v.saNameSuffix,
-		Children: make(map[string]ChildSA),
-		Version: filewrapper.GetIntValueFromPath(path, "Version"),
-		Proposals: filewrapper.GetStringArrayFromPath(path, "proposals"),
-		DpdDelay: "2s",
-		Mobike: "no",
-		Encap: "yes",
+	
+	ret.DpdDelay = "2s"
+	ret.Mobike = "no"
+	ret.Encap = "yes"
+	ret.Name = path
+	ret.ChildName = path + v.saNameSuffix
+
+	ret.LocalAddrs = filewrapper.GetStringArrayFromPath(path, "LocalAddrs")
+	if (len(ret.LocalAddrs) == 0 || ret.LocalAddrs[0] == ""){
+		return ret, fmt.Errorf("[%s] LocalAddrs not found in config file\n", path)
 	}
-	ret.Children[ret.ChildName] = ChildSA{
-		LocalTS: filewrapper.GetStringArrayFromPath(path, "LocalTrafficSelectors"),
-		RemoteTS: filewrapper.GetStringArrayFromPath(path, "RemoteTrafficSelectors"),
-		Proposals: filewrapper.GetStringArrayFromPath(path, "ESPProposals"),
+	ret.RemoteAddrs = filewrapper.GetStringArrayFromPath(path, "RemoteAddrs")
+	if (len(ret.RemoteAddrs) == 0 || ret.RemoteAddrs[0] == ""){
+		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file\n", path)
 	}
-	if ret.Path == "" 
-		|| len(ret.LocalAddrs) == 0 || len(ret.RemoteAddrs) == 0
-		|| ret.Local.ID == "" || ret.Remote.ID == ""
-		|| ret.Version == 0 || len(ret.Proposals) == 0
-		|| len(ret.Children) == 0 || len(ret.Childnre[ret.ChildName].LocalTS) == 0
-		|| len(ret.Childnre[ret.ChildName].RemoteTS) == 0 || len(ret.Childnre[ret.ChildName].Proposals) == 0 {
-			//Präzisieren des Fehlers
-		return loadConnection{}, fmt.Errorf("[connection] There is an error in the connection")
+	ret.Version = filewrapper.GetIntValueFromPath(path, "Version")
+	if ret.Version == 0 {
+		return ret, fmt.Errorf("[%s] Version not found in config file\n", path)
 	}
+	ret.Proposals = filewrapper.GetStringArrayFromPath(path, "proposals")
+	if (len(ret.Proposals) == 0 || ret.Proposals[0] == "") {
+		return ret, fmt.Errorf("[%s] proposals not found in config file\n", path)
+	}
+	ret.Local = AuthOpts{ Auth: "psk", ID: filewrapper.GetStringValueFromPath("me.secret", "RemoteAddrs"), }
+	if ret.Local.ID == "" {
+		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file\n", "me.secret")
+	}
+	ret.Remote = AuthOpts{ Auth: "psk", ID: filewrapper.GetStringValueFromPath(path, "RemoteAddrs"), }
+	if ret.Remote.ID == "" {
+		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file\n", path)
+	}
+	ret.Children = make(map[string]ChildSA)
+	child := ChildSA{}
+	child.LocalTS = filewrapper.GetStringArrayFromPath(path, "LocalTrafficSelectors")
+	if len(child.LocalTS) == 0 || child.LocalTS[0] == "" {
+		return ret, fmt.Errorf("[%s] LocalTrafficSelectors not found in config file\n", path)
+	}
+	child.RemoteTS = filewrapper.GetStringArrayFromPath(path, "RemoteTrafficSelectors")
+	if len(child.RemoteTS) == 0 || child.RemoteTS[0] == "" {
+		return ret, fmt.Errorf("[%s] RemoteTrafficSelectors not found in config file\n", path)
+	}
+	child.Proposals = filewrapper.GetStringArrayFromPath(path, "ESPProposals")
+	if len(child.Proposals) == 0 || child.Proposals[0] == "" {
+		return ret, fmt.Errorf("[%s] ESPProposals not found inf config file\n", path)
+	}
+	ret.Children[ret.ChildName] = child
+	
 	return ret, nil
 }
 func (c loadConnection) unloadConnection(v *ViciWrapper) error {
