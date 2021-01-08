@@ -29,7 +29,7 @@ func connectionFromFile(path string) (loadConnection, error){
 	//TODO: check if everything is set!
 	return ret, nil
 }
-func (c loadConnection) unloadConnection(v *viciStruct) error {
+func (c loadConnection) unloadConnection(v *ViciWrapper) error {
 	m := vici.NewMessage()
         if err := m.Set("name", c.Name); err != nil {
                 return fmt.Errorf("[unload-conn] %s\n", err)
@@ -42,7 +42,7 @@ func (c loadConnection) unloadConnection(v *viciStruct) error {
         }
         return nil
 }
-func (c loadConnection) loadConnection(v *viciStruct) error {
+func (c loadConnection) loadConnection(v *ViciWrapper) error {
 	msg, err := vici.MarshalMessage(c)
 	if err != nil {
 		return fmt.Errorf("[load-conn] %s\n", err)
@@ -57,11 +57,11 @@ func (c loadConnection) loadConnection(v *viciStruct) error {
 	}
 	return nil
 }
-func (c loadConnection) reload(v *viciStruct) error {
+func (c loadConnection) reload(v *ViciWrapper) error {
 	c.unloadConnection(v)
 	return c.loadConnection(v)
 }
-func (c loadConnection) initiateConnection(v *viciStruct) error {
+func (c loadConnection) initiateConnection(v *ViciWrapper) error {
 	m := vici.NewMessage()
 	if err := m.Set("child", c.ChildName); err != nil{
 		return fmt.Errorf("[initiate] %s\n", err)
@@ -77,7 +77,7 @@ func (c loadConnection) initiateConnection(v *viciStruct) error {
 	}
 	return nil
 }
-func (c loadConnection) terminate(v *viciStruct) error {
+func (c loadConnection) terminate(v *ViciWrapper) error {
 	m := vici.NewMessage()
 	if err := m.Set("ike", c.Name); err != nil {
 		return fmt.Errorf("[terminate] %s\n", err)
@@ -96,22 +96,33 @@ func (c loadConnection) terminate(v *viciStruct) error {
 	}
 	return nil
 }
-func loadConn(v *viciStruct, path string) (loadConnection, error){
+func (w *ViciWrapper) loadConn(path string) (loadConnection, error){
+	found := false
+	for _, loaded := range w.ikesInSystem {
+		if loaded == path {
+			found = true
+			break
+		}
+	}
+	if found == false {
+		w.ikesInSystem = append(w.ikesInSystem, path)
+	}
+
 	c, e := connectionFromFile(path)
 	if e != nil {
 		return c, e
 	}
-	err := c.reload(v)
+	err := c.reload(w)
 	if err != nil {
 		return c, err
 	}
-	err = c.initiateConnection(v)
+	err = c.initiateConnection(w)
 	if err != nil {
 		return c, err
 	}
 	return c, nil
 }
-func listSAs(v *viciStruct)([]LoadedIKE, error){
+func (v *ViciWrapper) listSAs()([]LoadedIKE, error){
 	var retVar []LoadedIKE
 	v.startCommand()
 	msgs, err := v.session.StreamedCommandRequest("list-sas", "list-sa", nil)

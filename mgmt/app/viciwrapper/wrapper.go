@@ -3,11 +3,6 @@ import (
 	"github.com/strongswan/govici/vici"
 	"log"
 )
-type ViciWrapper struct {
-	ViciStruct		*viciStruct
-	initialized		bool
-	secretsInSystem		[]string
-}
 var ch_ike_to_check = make(chan string, 100)
 var me *ViciWrapper
 var saNameSuffix		string
@@ -20,57 +15,46 @@ func GetWrapper() (*ViciWrapper, error) {
 	//Singleton not yet created:
 	saNameSuffix = "-net"
 	me = &ViciWrapper{}
-	me.ViciStruct = &viciStruct{}
-	me.ViciStruct.startCommand()
+	me.startCommand()
 	s, err := vici.NewSession()
-	me.ViciStruct.endCommand(err)
+	me.endCommand(err)
 	if err != nil {
 		return &ViciWrapper{}, err
 	}
-	me.ViciStruct.session = s
-
+	me.session = s
+	me.checkChannel = make(chan string, 100)
 	return me, nil
 }
 func (w *ViciWrapper) GetViciMetrics() ViciMetrics{
-	secrets, err := countSecrets(w.ViciStruct)
+	secrets, err := w.countSecrets()
 	if err != nil {
 		log.Println(err)
 		secrets = 0
 	}
 	return ViciMetrics{
-		CounterCommands: w.ViciStruct.counterCommands,
-		CounterErrors: w.ViciStruct.counterErrors,
-		LastCommand: w.ViciStruct.lastCommand,
-		ExecDuraLast: w.ViciStruct.execDuraLast,
-		ExecDuraAvgNs: w.ViciStruct.execDuraAvgMs,
+		CounterCommands: w.counterCommands,
+		CounterErrors: w.counterErrors,
+		LastCommand: w.lastCommand,
+		ExecDuraLast: w.execDuraLast,
+		ExecDuraAvgNs: w.execDuraAvgMs,
 		LoadedSecrets: int64(secrets),
 	}
 }
 func (w *ViciWrapper) ReadSecret(pathToFile string) error {
-	return loadSharedSecret(w.ViciStruct, pathToFile)
+	return w.loadSharedSecret(pathToFile)
 }
 func (w *ViciWrapper) ReadConnection(pathToFile string) error {
-	found := false
-	for _, loaded := range ikesInSystem {
-		if loaded == pathToFile {
-			found = true
-			break
-		}
-	}
-	if found == false {
-		ikesInSystem = append(ikesInSystem, pathToFile)
-	}
-	_, err := loadConn(w.ViciStruct, pathToFile)
+	_, err := w.loadConn(pathToFile)
 	return err
 }
 func (w *ViciWrapper) ListIkes()([]LoadedIKE, error){
-	return listSAs(w.ViciStruct)
+	return w.listSAs()
 }
 func (w *ViciWrapper) WatchIkes(){
-	watchIkes(w.ViciStruct)
+	w.watchIkes()
 }
 func (w *ViciWrapper) MonitorConns(){
-	monitorConns(w.ViciStruct)
+	w.monitorConns()
 }
 func (w *ViciWrapper) GetIkesInSystem() int {
 	return len(ikesInSystem)

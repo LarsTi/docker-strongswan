@@ -5,7 +5,7 @@ import (
 	"../filewrapper"
         "github.com/strongswan/govici/vici"
 )
-func countSecrets(v *viciStruct) (int, error) {
+func (v *ViciWrapper) countSecrets() (int, error) {
         v.startCommand()
 	loaded, e := v.session.CommandRequest("get-shared", nil)
         v.endCommand(e)
@@ -15,7 +15,7 @@ func countSecrets(v *viciStruct) (int, error) {
 	
 	return len(loaded.Get("keys").([]string)), nil
 }
-func isSecretLoaded(v *viciStruct, secretId string) (bool, error){
+func (v *ViciWrapper) isSecretLoaded( secretId string) (bool, error){
 	v.startCommand()
         loaded, e := v.session.CommandRequest("get-shared", nil)
 	v.endCommand(e)
@@ -29,7 +29,7 @@ func isSecretLoaded(v *viciStruct, secretId string) (bool, error){
         }
         return false, nil
 }
-func unloadSecret(v *viciStruct, secretId string) error{
+func (v *ViciWrapper) unloadSecret(secretId string) error{
         m := vici.NewMessage()
         if err := m.Set("id", secretId); err != nil {
                 return fmt.Errorf("[unload-shared] %s\n", err)
@@ -40,10 +40,10 @@ func unloadSecret(v *viciStruct, secretId string) error{
         if e != nil {
                 return fmt.Errorf("[unload-shared] %s\n", e)
         }
-        return nil
+	return nil
 
 }
-func loadSharedSecret(v *viciStruct, path string) error{
+func (v *ViciWrapper) loadSharedSecret(path string) error{
         psk := sharedSecret{
                 Id: filewrapper.GetStringValueFromPath(path, "RemoteAddrs"),
                 Typ: "IKE",
@@ -53,11 +53,11 @@ func loadSharedSecret(v *viciStruct, path string) error{
 	if psk.Data == "" {
 		return fmt.Errorf("Secret in file %s is no PSK\n", path)
 	}
-	isLoaded, err := isSecretLoaded(v, psk.Id)
+	isLoaded, err := v.isSecretLoaded(psk.Id)
 	if err != nil {
 		return err
 	}else if isLoaded {
-                unloadSecret(v, psk.Id)
+                v.unloadSecret(psk.Id)
         }
         m, err := vici.MarshalMessage(psk)
         if err != nil {

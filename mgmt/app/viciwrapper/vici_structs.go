@@ -3,13 +3,17 @@ import (
 	"time"
 	"github.com/strongswan/govici/vici"
 )
-type viciStruct struct {
+type ViciWrapper struct {
 	session		*vici.Session
 	counterCommands int64
 	counterErrors	int64
 	lastCommand	time.Time
 	execDuraLast	time.Duration
 	execDuraAvgMs	int64
+	counterSecrets	int64
+	ikesInSystem	[]string
+	saNameSuffix	string
+	checkChannel	chan string
 }
 type ViciMetrics struct {
 	CounterCommands int64
@@ -19,10 +23,10 @@ type ViciMetrics struct {
 	ExecDuraAvgNs	int64
 	LoadedSecrets	int64
 }
-func (v *viciStruct) startCommand(){
+func (v *ViciWrapper) startCommand(){
 	v.lastCommand = time.Now()
 }
-func (v *viciStruct) endCommand(hasError error ){
+func (v *ViciWrapper) endCommand(hasError error ){
 	v.execDuraLast = time.Since(v.lastCommand)
 	if hasError != nil {
 		v.counterErrors ++
