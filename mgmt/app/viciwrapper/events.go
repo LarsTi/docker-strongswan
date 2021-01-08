@@ -5,6 +5,8 @@ import (
 	"time"
 )
 func (v *ViciWrapper) monitorConns(){
+	lastEventTime := make(map [string]time.Time)
+
 	v.startCommand()
         if err := v.session.Subscribe("child-updown"); err != nil {
 		v.endCommand(err)
@@ -23,7 +25,7 @@ func (v *ViciWrapper) monitorConns(){
 		if k == nil {
 			continue
 		}
-		log.Printf("[%s] %s | %s\n", e.Name, k, e.Message)
+		log.Printf("[%s] %s\n", e.Name, k)
 		for _,value := range k {
 			if(value == "up"){
 				//ist ein internes fragment
@@ -33,7 +35,11 @@ func (v *ViciWrapper) monitorConns(){
 				//ignoring unnamed SAs
 				continue
 			}
-			v.checkChannel <- value
+			lastEvent, ok := lastEventTime[value]
+			if (ok && time.Since(lastEvent) > 20 * time.Second){
+				v.checkChannel <- value
+			}
+			lastEventTime[value] = time.Now()
 		}
 
 	}
