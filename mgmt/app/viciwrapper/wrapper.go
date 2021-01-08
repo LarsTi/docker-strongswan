@@ -3,17 +3,13 @@ import (
 	"github.com/strongswan/govici/vici"
 	"log"
 )
-var ch_ike_to_check = make(chan string, 100)
 var me *ViciWrapper
-var saNameSuffix		string
-var ikesInSystem		[]string
 
 func GetWrapper() (*ViciWrapper, error) {
 	if me != nil {
 		return me, nil
 	}
 	//Singleton not yet created:
-	saNameSuffix = "-net"
 	me = &ViciWrapper{}
 	me.startCommand()
 	s, err := vici.NewSession()
@@ -23,6 +19,9 @@ func GetWrapper() (*ViciWrapper, error) {
 	}
 	me.session = s
 	me.checkChannel = make(chan string, 100)
+	me.terminateChannel = make(chan loadConnection, 10)
+	me.initiateChannel = make(chan loadConnection, 10)
+	me.saNameSuffix = "-net"
 	return me, nil
 }
 func (w *ViciWrapper) GetViciMetrics() ViciMetrics{
@@ -53,10 +52,7 @@ func (w *ViciWrapper) ListIkes()([]LoadedIKE, error){
 func (w *ViciWrapper) WatchIkes(){
 	w.watchIkes()
 }
-func (w *ViciWrapper) MonitorConns(){
-	w.monitorConns()
-}
 func (w *ViciWrapper) GetIkesInSystem() int {
-	return len(ikesInSystem)
+	return len(w.ikesInSystem)
 }
 

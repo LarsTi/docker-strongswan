@@ -4,16 +4,18 @@ import (
 	"github.com/strongswan/govici/vici"
 )
 type ViciWrapper struct {
-	session		*vici.Session
-	counterCommands int64
-	counterErrors	int64
-	lastCommand	time.Time
-	execDuraLast	time.Duration
-	execDuraAvgMs	int64
-	counterSecrets	int64
-	ikesInSystem	[]string
-	saNameSuffix	string
-	checkChannel	chan string
+	session			*vici.Session
+	counterCommands		int64
+	counterErrors		int64
+	lastCommand		time.Time
+	execDuraLast		time.Duration
+	execDuraAvgMs		int64
+	counterSecrets		int64
+	ikesInSystem		[]string
+	saNameSuffix		string
+	checkChannel		chan string
+	initiateChannel		chan loadConnection
+	terminateChannel	chan loadConnection
 }
 type ViciMetrics struct {
 	CounterCommands int64

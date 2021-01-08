@@ -5,14 +5,14 @@ import (
 	"../filewrapper"
         "github.com/strongswan/govici/vici"
 )
-func connectionFromFile(path string) (loadConnection, error){
+func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 	ret := loadConnection{
 		Name: path,
 		LocalAddrs: filewrapper.GetStringArrayFromPath(path, "LocalAddrs"),
 		RemoteAddrs: filewrapper.GetStringArrayFromPath(path, "RemoteAddrs"),
-		Local: AuthOpts { Auth: "psk", ID: filewrapper.GetStringValueFromPath("me", "RemoteAddrs"), },
+		Local: AuthOpts { Auth: "psk", ID: filewrapper.GetStringValueFromPath("me.secret", "RemoteAddrs"), },
 		Remote: AuthOpts { Auth: "psk", ID: filewrapper.GetStringValueFromPath(path, "RemoteAddrs"), },
-		ChildName: path + saNameSuffix,
+		ChildName: path + v.saNameSuffix,
 		Children: make(map[string]ChildSA),
 		Version: filewrapper.GetIntValueFromPath(path, "Version"),
 		Proposals: filewrapper.GetStringArrayFromPath(path, "proposals"),
@@ -108,7 +108,7 @@ func (w *ViciWrapper) loadConn(path string) (loadConnection, error){
 		w.ikesInSystem = append(w.ikesInSystem, path)
 	}
 
-	c, e := connectionFromFile(path)
+	c, e := w.connectionFromFile(path)
 	if e != nil {
 		return c, e
 	}
