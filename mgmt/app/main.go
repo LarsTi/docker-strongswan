@@ -42,7 +42,6 @@ func main() {
 	http.Handle("/metrics", promhttp.Handler())
 
 	//Starting monitoring Threads:
-        go vici.MonitorConns()
 	go vici.WatchIkes()
 
 	//Running Prometheus (blocking):
