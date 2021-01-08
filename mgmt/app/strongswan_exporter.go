@@ -3,9 +3,10 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 	"strings"
 	"time"
+	"./viciwrapper"
 )
 type StrongswanCollector struct {
-	vici			*viciStruct
+	wrapper			*viciwrapper.ViciWrapper
 	namespace		string
 
 	viciCntCommands		*prometheus.Desc
@@ -42,10 +43,10 @@ type StrongswanCollector struct {
 	saRekeySecs		*prometheus.Desc
 	saLifetimeSecs		*prometheus.Desc
 }
-func NewStrongswanCollector(v *viciStruct) *StrongswanCollector {
+func NewStrongswanCollector(w *viciwrapper.ViciWrapper) *StrongswanCollector {
 	ns := "strongswan_"
 	return &StrongswanCollector{
-		vici: v,
+		wrapper: w,
 		namespace: ns,
 
 		viciCntCommands: prometheus.NewDesc(
@@ -249,18 +250,14 @@ func (c *StrongswanCollector) Describe (ch chan<- *prometheus.Desc){
 
 }
 func (c *StrongswanCollector) Collect (ch chan<- prometheus.Metric) {
-	noOfKnownIkes := 0
-	if len(ikesInSystem) > 0 {
-		noOfKnownIkes = len(ikesInSystem)
-	}
 	ch <- prometheus.MustNewConstMetric(
 		c.ikeCnt, //Description
 		prometheus.GaugeValue, //Type
-		float64(noOfKnownIkes), //value
+		float64(c.wrapper.GetIkesInSystem()), //value
 	)
 	c.collectViciMetrics(ch)
 
-	data, err := listSAs(c.vici)
+	data, err := c.wrapper.ListIkes()
 	if err != nil {
 		ch <- prometheus.MustNewConstMetric(
 			c.ikeConnCnt, //Description
@@ -285,30 +282,30 @@ func (c *StrongswanCollector) collectViciMetrics(ch chan<- prometheus.Metric){
 	ch <- prometheus.MustNewConstMetric(
 		c.viciCntCommands, //Description
 		prometheus.CounterValue, //Type
-		float64(c.vici.counterCommands), //Value
+		float64(c.wrapper.ViciStruct.CounterCommands), //Value
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.viciCntErrors, //Description
 		prometheus.CounterValue, //Type
-		float64(c.vici.counterErrors), //Value
+		float64(c.wrapper.ViciStruct.CounterErrors), //Value
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.viciLastCommandSec, //Description
 		prometheus.GaugeValue, //Type
-		float64(time.Since(c.vici.lastCommand).Seconds()), //Value
+		float64(time.Since(c.wrapper.ViciStruct.LastCommand).Seconds()), //Value
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.viciExecLastNanoSec, //Description
 		prometheus.GaugeValue, //Type
-		float64(c.vici.execDuraLast.Nanoseconds()), //Value
+		float64(c.wrapper.ViciStruct.ExecDuraLast.Nanoseconds()), //Value
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.viciExecAvgNanoSec, //Description
 		prometheus.GaugeValue, //Type
-		float64(c.vici.execDuraAvgMs), //Value
+		float64(c.wrapper.ViciStruct.ExecDuraAvgMs), //Value
 	)
 }
-func (c *StrongswanCollector) collectIkeMetrics(d loadedIKE, ch chan<- prometheus.Metric){
+func (c *StrongswanCollector) collectIkeMetrics(d viciwrapper.LoadedIKE, ch chan<- prometheus.Metric){
 	ch <- prometheus.MustNewConstMetric(
 		c.ikeVersion, //Description
 		prometheus.GaugeValue, //Type
@@ -383,7 +380,7 @@ func (c *StrongswanCollector) collectIkeMetrics(d loadedIKE, ch chan<- prometheu
 		d.Name, //Labels
 	)
 }
-func (c *StrongswanCollector) collectSaMetrics(name string ,d loadedChild, ch chan<- prometheus.Metric){
+func (c *StrongswanCollector) collectSaMetrics(name string ,d viciwrapper.LoadedChild, ch chan<- prometheus.Metric){
 	state := 0
 	if d.State == "ESTABLISHED" {
 		state = 1

@@ -1,20 +1,34 @@
-package main
+package viciwrapper
 import (
 	"time"
 	"github.com/strongswan/govici/vici"
 )
-type viciStruct struct {
-	session		*vici.Session
-	counterCommands int64
-	counterErrors	int64
-	lastCommand	time.Time
-	execDuraLast	time.Duration
-	execDuraAvgMs	int64
+type ViciWrapper struct {
+	session			*vici.Session
+	counterCommands		int64
+	counterErrors		int64
+	lastCommand		time.Time
+	execDuraLast		time.Duration
+	execDuraAvgMs		int64
+	counterSecrets		int64
+	ikesInSystem		[]string
+	saNameSuffix		string
+	checkChannel		chan string
+	initiateChannel		chan loadConnection
+	terminateChannel	chan loadConnection
 }
-func (v *viciStruct) startCommand(){
+type ViciMetrics struct {
+	CounterCommands int64
+	CounterErrors	int64
+	LastCommand	time.Time
+	ExecDuraLast	time.Duration
+	ExecDuraAvgNs	int64
+	LoadedSecrets	int64
+}
+func (v *ViciWrapper) startCommand(){
 	v.lastCommand = time.Now()
 }
-func (v *viciStruct) endCommand(hasError error ){
+func (v *ViciWrapper) endCommand(hasError error ){
 	v.execDuraLast = time.Since(v.lastCommand)
 	if hasError != nil {
 		v.counterErrors ++
@@ -52,7 +66,7 @@ type ChildSA struct {
 	RemoteTS	[]string		`vici:"remote_ts"`
 	Proposals	[]string		`vici:"esp_proposals"`
 }
-type loadedIKE struct {
+type LoadedIKE struct {
 	Name		string
 	Version		int			`vici:"version"`
 	State		string			`vici:"state"`
@@ -69,9 +83,9 @@ type loadedIKE struct {
 	EstablishSec	int64			`vici:"established"`
 	RekeySec	int64			`vici:"rekey-time"`
 	ReauthSec	int64			`vici:"reauth-time"`
-	Children	map[string]loadedChild	`vici:"child-sas"`
+	Children	map[string]LoadedChild	`vici:"child-sas"`
 }
-type loadedChild struct {
+type LoadedChild struct {
 	Name		string			`vici:"name"`
 	State		string			`vici:"state"`
 	Mode		string			`vici:"mode"`
