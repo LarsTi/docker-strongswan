@@ -14,6 +14,7 @@ type StrongswanCollector struct {
 	viciLastCommandSec	*prometheus.Desc
 	viciExecLastNanoSec	*prometheus.Desc
 	viciExecAvgNanoSec	*prometheus.Desc
+	viciLoadedSecrets	*prometheus.Desc
 
 	ikeCnt			*prometheus.Desc
 	ikeConnCnt		*prometheus.Desc
@@ -72,6 +73,11 @@ func NewStrongswanCollector(w *viciwrapper.ViciWrapper) *StrongswanCollector {
 		viciExecAvgNanoSec: prometheus.NewDesc(
 			ns+"vici_execution_nanoseconds_avg",
 			"Average nanoseconds for command execution during this vici session",
+			nil, nil,
+		),
+		viciLoadedSecrets: prometheus.NewDesc(
+			ns+"vici_loaded_secrets",
+			"Loaded Secrets Number",
 			nil, nil,
 		),
 
@@ -219,6 +225,7 @@ func (c *StrongswanCollector) Describe (ch chan<- *prometheus.Desc){
 	ch <- c.viciLastCommandSec
 	ch <- c.viciExecLastNanoSec
 	ch <- c.viciExecAvgNanoSec
+	ch <- c.viciLoadedSecrets
 
 	ch <- c.ikeCnt
 	ch <- c.ikeConnCnt
@@ -279,30 +286,36 @@ func (c *StrongswanCollector) Collect (ch chan<- prometheus.Metric) {
 	}
 }
 func (c *StrongswanCollector) collectViciMetrics(ch chan<- prometheus.Metric){
+	metric := c.wrapper.GetViciMetrics()
 	ch <- prometheus.MustNewConstMetric(
 		c.viciCntCommands, //Description
 		prometheus.CounterValue, //Type
-		float64(c.wrapper.ViciStruct.CounterCommands), //Value
+		float64(metric.CounterCommands), //Value
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.viciCntErrors, //Description
 		prometheus.CounterValue, //Type
-		float64(c.wrapper.ViciStruct.CounterErrors), //Value
+		float64(metric.CounterErrors), //Value
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.viciLastCommandSec, //Description
 		prometheus.GaugeValue, //Type
-		float64(time.Since(c.wrapper.ViciStruct.LastCommand).Seconds()), //Value
+		float64(time.Since(metric.LastCommand).Seconds()), //Value
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.viciExecLastNanoSec, //Description
 		prometheus.GaugeValue, //Type
-		float64(c.wrapper.ViciStruct.ExecDuraLast.Nanoseconds()), //Value
+		float64(metric.ExecDuraLast.Nanoseconds()), //Value
 	)
 	ch <- prometheus.MustNewConstMetric(
 		c.viciExecAvgNanoSec, //Description
 		prometheus.GaugeValue, //Type
-		float64(c.wrapper.ViciStruct.ExecDuraAvgMs), //Value
+		float64(metric.ExecDuraAvgNs), //Value
+	)
+	ch <- prometheus.MustNewConstMetric(
+		c.viciLoadedSecrets, //Description
+		prometheus.GaugeValue, //Type
+		float64(metric.LoadedSecrets),
 	)
 }
 func (c *StrongswanCollector) collectIkeMetrics(d viciwrapper.LoadedIKE, ch chan<- prometheus.Metric){

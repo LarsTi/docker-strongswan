@@ -27,7 +27,14 @@ services:
                                 ipv4_address: 172.16.250.50
                         public:
                                 ipv4_address: {{publicIP}}
-
+        mgmt:
+                build: ./mgmt
+                restart: unless-stopped
+                volumes:
+                        - "/etc/timezone:/etc/timezone:ro"
+                        - "/etc/localtime:/etc/localtime:ro"
+                        - "./_volumes/vici_socket:/var/run"
+                        - "./config:/app/config"
 networks:
         default:
                 ipam:
