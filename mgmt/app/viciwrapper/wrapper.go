@@ -46,6 +46,14 @@ func (w *ViciWrapper) ReadSecret(pathToFile string) error {
 func (w *ViciWrapper) UnloadSecret(pathToFile string) error {
 	return w.unloadSecret(filewrapper.GetStringValueFromPath(pathToFile, "RemoteAddrs"))
 }
+func (w *ViciWrapper) UnloadConnection(pathToFile string) error {
+	conn, err := w.connectionFromFile(pathToFile)
+	if err != nil {
+		return err
+	}
+	return conn.unloadConnection(w)
+
+}
 func (w *ViciWrapper) ReadConnection(pathToFile string) error {
 	_, err := w.loadConn(pathToFile)
 	return err

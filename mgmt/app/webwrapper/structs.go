@@ -1,7 +1,4 @@
 package webwrapper
-import (
-	//"encoding/json"
-)
 type sharedSecret struct {
 	Path		string	`json:path,omitempty`
 	Typ		string	`json:typ,omitempty`

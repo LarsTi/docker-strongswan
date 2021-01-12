@@ -9,15 +9,24 @@ import (
 	"../filewrapper"
 	"../viciwrapper"
 )
+func getSecretFromFile(pathToFile string) sharedSecret{
+	return sharedSecret{
+		Path: strings.TrimSuffix(pathToFile, ".secret"),
+		Typ: "PSK",
+		Data: filewrapper.GetStringValueFromPath(pathToFile, "PSK"),
+		Owners: filewrapper.GetStringValueFromPath(pathToFile, "RemoteAddrs"),
+	}
+}
+func getSecrets(w http.ResponseWriter, r *http.Request){
+	var ret []sharedSecret
+	for _, secretPath := range filewrapper.GetFilesForSecrets(){
+		ret = append(ret, getSecretFromFile(secretPath))
+	}
+	json.NewEncoder(w).Encode(ret)
+}
 func getSecret (w http.ResponseWriter, r *http.Request){
 	path := getSecretPath(r)
-	params := mux.Vars(r)
-	ret := sharedSecret{
-		Path: params["path"],
-		Typ: "PSK",
-		Data: filewrapper.GetStringValueFromPath(path, "PSK"),
-		Owners: filewrapper.GetStringValueFromPath(path, "RemoteAddrs"),
-	}
+	ret := getSecretFromFile(path)
 	json.NewEncoder(w).Encode(ret)
 }
 func unloadSecret (w http.ResponseWriter, r *http.Request) {
