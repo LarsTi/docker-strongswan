@@ -1,24 +1,24 @@
 package webwrapper
 type sharedSecret struct {
-	Path		string	`json:path,omitempty`
-	Typ		string	`json:typ,omitempty`
-	Data		string	`json:data,omitempty`
-	Owners		string	`json:owner,omitempty`
+	Path		string	`json:Path,omitempty`
+	Typ		string	`json:Typ,omitempty`
+	Data		string	`json:Data,omitempty`
+	Owners		string	`json:Owners,omitempty`
 }
 type connection struct {
-	Path		string	`json:path,omitempty`
-	LocalAddrs	string	`json:local,omitempty`
-	RemoteAddrs	string	`json:remote,omitempty`
-	Version		int	`json:version,omitempty`
-	Proposals	string	`json:proposals,omitempty`
-	DpdDelay	string	`json:dpdDelay,omitempty`
-	DpdTimeout	string	`json:dpdTimeout,omitempty`
-	LocalTS		string	`json:localTS,omitempty`
-	RemoteTS	string	`json:remoteTS,omitempty`
-	ChildProposals	string	`json:childProposals,omitempty`
+	Path		string	`json:Path,omitempty`
+	LocalAddrs	string	`json:LocalAddrs,omitempty`
+	RemoteAddrs	string	`json:RemoteAddrs,omitempty`
+	Version		int	`json:Version,omitempty`
+	Proposals	string	`json:Proposals,omitempty`
+	DpdDelay	string	`json:DpdDelay,omitempty`
+	DpdTimeout	string	`json:DpdTimeout,omitempty`
+	LocalTS		string	`json:LocalTS,omitempty`
+	RemoteTS	string	`json:RemoteTS,omitempty`
+	ChildProposals	string	`json:ChildProposals,omitempty`
 }
 type retMessage struct {
-	Path		string	`json:path,omitempty`
-	Error		string	`json:err,omitempty`
-	Success		string	`json:success,omitempty`
+	Path		string	`json:Path,omitempty`
+	Error		string	`json:Err,omitempty`
+	Success		string	`json:Success,omitempty`
 }

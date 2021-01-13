@@ -19,41 +19,41 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 
 	ret.LocalAddrs = filewrapper.GetStringArrayFromPath(path, "LocalAddrs")
 	if (len(ret.LocalAddrs) == 0 || ret.LocalAddrs[0] == ""){
-		return ret, fmt.Errorf("[%s] LocalAddrs not found in config file\n", path)
+		return ret, fmt.Errorf("[%s] LocalAddrs not found in config file", path)
 	}
 	ret.RemoteAddrs = filewrapper.GetStringArrayFromPath(path, "RemoteAddrs")
 	if (len(ret.RemoteAddrs) == 0 || ret.RemoteAddrs[0] == ""){
-		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file\n", path)
+		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file", path)
 	}
 	ret.Version = filewrapper.GetIntValueFromPath(path, "Version")
 	if ret.Version == 0 {
-		return ret, fmt.Errorf("[%s] Version not found in config file\n", path)
+		return ret, fmt.Errorf("[%s] Version not found in config file", path)
 	}
 	ret.Proposals = filewrapper.GetStringArrayFromPath(path, "proposals")
 	if (len(ret.Proposals) == 0 || ret.Proposals[0] == "") {
-		return ret, fmt.Errorf("[%s] proposals not found in config file\n", path)
+		return ret, fmt.Errorf("[%s] proposals not found in config file", path)
 	}
 	ret.Local = AuthOpts{ Auth: "psk", ID: filewrapper.GetStringValueFromPath("me.secret", "RemoteAddrs"), }
 	if ret.Local.ID == "" {
-		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file\n", "me.secret")
+		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file", "me.secret")
 	}
 	ret.Remote = AuthOpts{ Auth: "psk", ID: filewrapper.GetStringValueFromPath(path, "RemoteAddrs"), }
 	if ret.Remote.ID == "" {
-		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file\n", path)
+		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file", path)
 	}
 	ret.Children = make(map[string]ChildSA)
 	child := ChildSA{}
 	child.LocalTS = filewrapper.GetStringArrayFromPath(path, "LocalTrafficSelectors")
 	if len(child.LocalTS) == 0 || child.LocalTS[0] == "" {
-		return ret, fmt.Errorf("[%s] LocalTrafficSelectors not found in config file\n", path)
+		return ret, fmt.Errorf("[%s] LocalTrafficSelectors not found in config file", path)
 	}
 	child.RemoteTS = filewrapper.GetStringArrayFromPath(path, "RemoteTrafficSelectors")
 	if len(child.RemoteTS) == 0 || child.RemoteTS[0] == "" {
-		return ret, fmt.Errorf("[%s] RemoteTrafficSelectors not found in config file\n", path)
+		return ret, fmt.Errorf("[%s] RemoteTrafficSelectors not found in config file", path)
 	}
 	child.Proposals = filewrapper.GetStringArrayFromPath(path, "ESPProposals")
 	if len(child.Proposals) == 0 || child.Proposals[0] == "" {
-		return ret, fmt.Errorf("[%s] ESPProposals not found inf config file\n", path)
+		return ret, fmt.Errorf("[%s] ESPProposals not found inf config file", path)
 	}
 	ret.Children[ret.ChildName] = child
 	
@@ -62,20 +62,21 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 func (c loadConnection) unloadConnection(v *ViciWrapper) error {
 	m := vici.NewMessage()
         if err := m.Set("name", c.Name); err != nil {
-                return fmt.Errorf("[unload-conn] %s\n", err)
+                return fmt.Errorf("[unload-conn] %s", err)
         }
         v.startCommand()
 	_, err := v.session.CommandRequest("unload-conn", m)
 	v.endCommand(err)
         if err != nil{
-                return fmt.Errorf("[unload-conn] %s\n", err)
+                return fmt.Errorf("[unload-conn] %s", err)
         }
+
         return nil
 }
 func (c loadConnection) loadConnection(v *ViciWrapper) error {
 	msg, err := vici.MarshalMessage(c)
 	if err != nil {
-		return fmt.Errorf("[load-conn] %s\n", err)
+		return fmt.Errorf("[load-conn] %s", err)
 	}
 	m := vici.NewMessage()
 	m.Set(c.Name, msg)
@@ -83,7 +84,7 @@ func (c loadConnection) loadConnection(v *ViciWrapper) error {
 	_, e := v.session.CommandRequest("load-conn", m)
 	v.endCommand(e)
 	if e != nil {
-		return fmt.Errorf("[load-conn] %s\n", e)
+		return fmt.Errorf("[load-conn] %s", e)
 	}
 	return nil
 }
@@ -94,35 +95,35 @@ func (c loadConnection) reload(v *ViciWrapper) error {
 func (c loadConnection) initiateConnection(v *ViciWrapper) error {
 	m := vici.NewMessage()
 	if err := m.Set("child", c.ChildName); err != nil{
-		return fmt.Errorf("[initiate] %s\n", err)
+		return fmt.Errorf("[initiate] %s", err)
 	}
 	if err := m.Set("ike", c.Name); err != nil {
-		return fmt.Errorf("[initiate] %s\n", err)
+		return fmt.Errorf("[initiate] %s", err)
 	}
 	v.startCommand()
 	_, err := v.session.CommandRequest("initiate", m)
 	v.endCommand(err)
 	if err != nil {
-		return fmt.Errorf("[initiate] %s\n", err)
+		return fmt.Errorf("[initiate] %s", err)
 	}
 	return nil
 }
 func (c loadConnection) terminate(v *ViciWrapper) error {
 	m := vici.NewMessage()
 	if err := m.Set("ike", c.Name); err != nil {
-		return fmt.Errorf("[terminate] %s\n", err)
+		return fmt.Errorf("[terminate] %s", err)
 	}
 	if err := m.Set("force", true); err != nil {
-		return fmt.Errorf("[terminate] %s\n", err)
+		return fmt.Errorf("[terminate] %s", err)
 	}
 	if err := m.Set("timeout", 1000); err != nil {
-		return fmt.Errorf("[terminate] %s\n", err)
+		return fmt.Errorf("[terminate] %s", err)
 	}
 	v.startCommand()
 	_, err := v.session.CommandRequest("terminate", m)
 	v.endCommand(err)
 	if err != nil {
-		return fmt.Errorf("[terminate] %s\n", err)
+		return fmt.Errorf("[terminate] %s", err)
 	}
 	return nil
 }

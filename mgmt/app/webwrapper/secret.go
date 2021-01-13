@@ -74,6 +74,7 @@ func changeSecret (w http.ResponseWriter, r *http.Request) {
 
 	secret := sharedSecret{}
 	json.NewDecoder(r.Body).Decode(&secret)
+	log.Println(secret)
 	//path = me.secret, secrets.path = me
 	if ! strings.HasPrefix(path, secret.Path) {
 		log.Printf("[webapi][%s] wrong Path set in JSON")

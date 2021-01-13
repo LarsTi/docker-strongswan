@@ -19,7 +19,7 @@ func RunWebApi(port int) {
 	router.HandleFunc("/api/secrets/{path}/unload", UnloadSecret).Methods("PUT")
 	router.HandleFunc("/api/secrets/{path}/load", LoadSecret).Methods("PUT")
 	
-	router.HandleFunc("/api/connections/", GetConnections).Methods("GET")
+	router.HandleFunc("/api/connections", GetConnections).Methods("GET")
 	router.HandleFunc("/api/connections/{path}", GetConnection).Methods("GET")
 	router.HandleFunc("/api/connections/{path}", ChangeConnection).Methods("PUT")
 	router.HandleFunc("/api/connections/{path}", CreateConnection).Methods("POST")

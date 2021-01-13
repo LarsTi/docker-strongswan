@@ -51,6 +51,13 @@ func (w *ViciWrapper) UnloadConnection(pathToFile string) error {
 	if err != nil {
 		return err
 	}
+	ikes := []string{}
+	for _, ike := range w.ikesInSystem {
+		if ike == pathToFile {
+			continue
+		}
+		ikes = append(ikes, ike)
+	}
 	return conn.unloadConnection(w)
 
 }
