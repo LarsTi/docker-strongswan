@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="de">
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+		<!-- Compiled and minified CSS -->
+		<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/css/materialize.min.css">
+		<title>IPSec Configuration</title>
+		
+	</head>
+	<body>
+		
+		<h1 class="header center">IPSec Configuration</h1>
+		<div class="container">
+			<div class="section">
+				<div class="row">
+					<div class="col s12">
+					  <ul class="tabs">
+						<li class="tab col s6"><a class="active" href="#secrets">IPSec PSKs</a></li>
+						<li class="tab col s6"><a href="#connection">IPSec Connections</a></li>
+					  </ul>
+					</div>
+					<div id="secrets" class="col s12">
+						<ul id="secretscollapsible" class="collapsible">
+							<li>
+								<div class="collapsible-header">Neues PSK</div>
+								<div class="collapsible-body">
+									<div class="row">
+										<div class ="input-field col s4 center">
+											<input value="" placeholder="127.0.0.1" id="secret-owner-new" type="text">
+											<label class="active" for="secret-owner-new">Owner (Others Public IP)</label>
+										</div>
+										<div class ="input-field col s4 center">
+											<input value="" placeholder="SicheresPSK" id="secret-psk-new" type="text">
+											<label class="active" for="secret-psk-new">Preshared Secret Key</label>
+										</div>
+										<div class="input-field col s4">
+											<input value="new" placeholder="Neuer Path" id="secret-path-new" type="text">
+											<label class="active" for="secret-psk-new">Pfad zur Datei</label>
+										</div>
+									</div>
+									<div class="row">
+										<button type="button" class="waves-effect waves-light btn" onclick="onSecretEdit('new')">Edit</button>
+										<button type="button" class="waves-effect waves-light btn" onclick="onSecretLoad('new')">Load</button>
+										<button type="button" class="waves-effect waves-light btn" onclick="onSecretUnload('new')">Unload</button>
+										<button type="button" class="waves-effect waves-light btn" onclick="onSecretDelete('new')">Delete</button>
+									</div>
+								</div>
+							</li>
+						</ul>
+					</div>
+					<div id="connection" class="col s12">
+						<ul id="connectionscollapsible" class="collapsible">
+							<li>
+								<div class="collapsible-header">Neue Verbindung</div>
+								<div class="collapsible-body">
+									<div class="row">
+										<div class ="input-field col s4 center">
+											<input value="" placeholder="Neuer Pfad" id="connection-path-new" type="text">
+											<label class="active" for="connection-path-new">Pfad zur Datei</label>
+										</div>
+										<div class ="input-field col s4 center">
+											<input value="" placeholder="LocalPubIp" id="connection-local-ip-new" type="text">
+											<label class="active" for="connection-local-ip-new">Lokale Public IP</label>
+										</div>
+										<div class ="input-field col s4 center">
+											<input value="" placeholder="RemoteIP" id="connection-remote-ip-new" type="text">
+											<label class="active" for="connection-remote-ip-new">Remote Public IP</label>
+										</div>
+									<div>
+									<div class="row">
+										<div class ="input-field col s4 center">
+											<input value="" placeholder="1||2" id="connection-version-new" type="text">
+											<label class="active" for="connection-version-new">IKE Version</label>
+										</div>
+										<div class ="input-field col s4 center">
+											<input value="" placeholder="aes256-sha1-modp4096" id="connection-proposals-new" type="text">
+											<label class="active" for="connection-proposals-new">Proposal for IKE</label>
+										</div>
+										<div class ="input-field col s4 center">
+											<input value="" placeholder="aes256-sha1-modp4096" id="connection-child-proposals-new" type="text">
+											<label class="active" for="connection-child-proposals-new">Proposals for Children</label>
+										</div>
+									</div>
+									<div class="row">
+										<div class ="input-field col s12 center">
+											<input value="" placeholder="172.16.250.0/24" id="connection-local-ts-new" type="text">
+											<label class="active" for="connection-local-ts-new">TrafficSelector for LocalSubnets</label>
+										</div>
+									</div>
+									<div class="row">
+										<div class ="input-field col s12 center">
+											<input value="" placeholder="172.16.250.0/24,192.168.0/16" id="connection-remote-ts-new" type="text">
+											<label class="active" for="connection-remote-ts-new">TrafficSelector for RemoteSubnets</label>
+										</div>
+									</div>
+									<div class="row">
+										<button type="button" class="waves-effect waves-light btn" onclick="onConnectionEdit('new')">Edit</button>
+										<button type="button" class="waves-effect waves-light btn" onclick="onConnectionLoad('new')">Load</button>
+										<button type="button" class="waves-effect waves-light btn" onclick="onConnectionUnload('new')">Unload</button>
+										<button type="button" class="waves-effect waves-light btn" onclick="onConnectionDelete('new')">Delete</button>
+									</div>
+								</div>
+							</li>
+						</ul>
+					</div>
+				</div>
+			</div>
+		</div>
+		<footer class="page-footer orange">
+			<div class="container">
+				<div class="row">
+					<h4 class="header center">IPSec Management</h4>
+				</div>
+			</div>
+		</footer>
+		<!-- scripts -->
+		<!-- Compiled and minified JavaScript -->
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+		<script src="https://code.jquery.com/jquery-3.5.1.min.js" integrity="sha256-9/aliU8dGd2tb6OSsuzixeV4y/faTqgFtohetphbbj0=" crossorigin="anonymous"></script>
+		<script src="js.js"></script>
+	</body>
+</html>
