@@ -5,8 +5,6 @@ import (
 	"net/http"
 	"encoding/json"
 	"log"
-//	"strings"
-	"strconv"
 	"../filewrapper"
 	"../viciwrapper"
 )
@@ -15,7 +13,7 @@ func getConnectionFromFile(pathToFile string) connection {
 		Path: pathToFile,
 		LocalAddrs: filewrapper.GetStringValueFromPath(pathToFile, "LocalAddrs"),
 		RemoteAddrs: filewrapper.GetStringValueFromPath(pathToFile, "RemoteAddrs"),
-		Version: filewrapper.GetIntValueFromPath(pathToFile,"Version"),
+		Version: filewrapper.GetStringValueFromPath(pathToFile,"Version"),
 		Proposals: filewrapper.GetStringValueFromPath(pathToFile, "proposals"),
 		LocalTS: filewrapper.GetStringValueFromPath(pathToFile, "LocalTrafficSelectors"),
 		RemoteTS: filewrapper.GetStringValueFromPath(pathToFile, "RemoteTrafficSelectors"),
@@ -72,7 +70,7 @@ func createConnection(w http.ResponseWriter, r *http.Request){
 	}else if changed == true {
 		anyChange = true
 	}
-	changed, err = changeIfNeeded(path, "Version", strconv.Itoa(newConnection.Version))
+	changed, err = changeIfNeeded(path, "Version", newConnection.Version)
 	if err != nil {
 		errorPrefix(w, "Version", path)
 		return
@@ -147,7 +145,7 @@ func changeConnection(w http.ResponseWriter, r *http.Request){
 	}else if changed == true {
 		anyChange = true
 	}
-	changed, err = changeIfNeeded(path, "Version", strconv.Itoa(newConnection.Version))
+	changed, err = changeIfNeeded(path, "Version", newConnection.Version)
 	if err != nil {
 		errorPrefix(w, "Version", path)
 		return

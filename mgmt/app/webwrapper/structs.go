@@ -9,7 +9,7 @@ type connection struct {
 	Path		string	`json:Path,omitempty`
 	LocalAddrs	string	`json:LocalAddrs,omitempty`
 	RemoteAddrs	string	`json:RemoteAddrs,omitempty`
-	Version		int	`json:Version,omitempty`
+	Version		string	`json:Version,omitempty`
 	Proposals	string	`json:Proposals,omitempty`
 	DpdDelay	string	`json:DpdDelay,omitempty`
 	DpdTimeout	string	`json:DpdTimeout,omitempty`
