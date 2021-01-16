@@ -1,6 +1,7 @@
 FROM golang:latest as builder
 WORKDIR /app/src
-RUN go get github.com/prometheus/client_golang/prometheus && \
+RUN go get github.com/gorilla/mux && \
+    go get github.com/prometheus/client_golang/prometheus && \
     go get github.com/prometheus/client_golang/prometheus/promauto && \
     go get github.com/prometheus/client_golang/prometheus/promhttp && \
     go get github.com/strongswan/govici/vici

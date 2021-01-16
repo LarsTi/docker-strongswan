@@ -3,6 +3,7 @@ import (
         "log"
 	"./viciwrapper"
 	"./filewrapper"
+	"./webwrapper"
 	"net/http"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 )
@@ -43,7 +44,7 @@ func main() {
 
 	//Starting monitoring Threads:
 	go vici.WatchIkes()
-
+	go webwrapper.RunWebApi(8085)
 	//Running Prometheus (blocking):
 	log.Fatalln(http.ListenAndServe(":8080", nil))
 }

@@ -2,6 +2,7 @@ package viciwrapper
 
 import (
         "fmt"
+	"log"
 	"../filewrapper"
         "github.com/strongswan/govici/vici"
 )
@@ -40,6 +41,7 @@ func (v *ViciWrapper) unloadSecret(secretId string) error{
         if e != nil {
                 return fmt.Errorf("[unload-shared] %s\n", e)
         }
+	log.Printf("[secret] %s was unloaded\n", secretId)
 	return nil
 
 }
@@ -69,5 +71,6 @@ func (v *ViciWrapper) loadSharedSecret(path string) error{
         if err2 != nil {
                 return fmt.Errorf("[%s] %s\n", path, err2)
         }
+	log.Printf("[secret] %s was loaded\n", path)
         return nil
 }

@@ -6,6 +6,8 @@ import (
         "bufio"
         "os"
         "strconv"
+	"io/ioutil"
+	"log"
 )
 func getAllFiles() []string{
         var files []string
@@ -43,6 +45,42 @@ func GetFilesForConnections() []string{
 		files = append(files, file)
 	}
 	return files
+}
+func DeleteFile(path string) error {
+	file := strings.Join([]string{"/app", "config", path, }, "/")
+	err := os.Remove(file)
+	if err != nil {
+		log.Printf("[file] %s could not be deleted", path)
+	}
+	return err
+}
+func WriteOrReplaceLine(path string, prefix string, value string) error {
+	file := strings.Join([]string{"/app", "config", path, }, "/")
+	input, err := ioutil.ReadFile(file)
+	prefixWritten := false
+	var lines []string
+	if err != nil {
+		log.Printf("[file] %s does not exist, creating it", path)
+	}else{
+		lines = strings.Split(string(input), "\n")
+		for i, line := range lines {
+			if strings.HasPrefix(line, prefix) {
+				lines[i] = strings.Join([]string{prefix, value,}, "=")
+				prefixWritten = true
+				break
+			}
+		}
+	}
+	if prefixWritten == false {
+		lines = append(lines, strings.Join([]string{prefix, value, }, "="))
+	}
+	output := strings.Join(lines, "\n")
+	err = ioutil.WriteFile(file, []byte(output), 0666)
+	if err != nil {
+		return fmt.Errorf("[%s - file] %s", path, err)
+	}
+	log.Printf("[%s - file] prefix %s was written successfully\n", path, prefix)
+	return nil
 }
 func GetStringValueFromPath(path string, value string) string{
         f, err := os.Open(strings.Join([]string{"/app","config",path}, "/"))

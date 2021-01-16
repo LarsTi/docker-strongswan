@@ -1,7 +1,0 @@
-RemoteAddrs=YourFriendsIP
-LocalAddrs=YourPublicIP
-proposals=aes256-sha1-modp4096
-Version=2
-RemoteTrafficSelectors=10.10.10.0/24
-LocalTrafficSelectors=172.16.250.0/24
-ESPProposals=aes256-sha1-modp4096

@@ -1,6 +1,7 @@
 package viciwrapper
 import (
 	"github.com/strongswan/govici/vici"
+	"../filewrapper"
 	"log"
 )
 var me *ViciWrapper
@@ -41,6 +42,24 @@ func (w *ViciWrapper) GetViciMetrics() ViciMetrics{
 }
 func (w *ViciWrapper) ReadSecret(pathToFile string) error {
 	return w.loadSharedSecret(pathToFile)
+}
+func (w *ViciWrapper) UnloadSecret(pathToFile string) error {
+	return w.unloadSecret(filewrapper.GetStringValueFromPath(pathToFile, "RemoteAddrs"))
+}
+func (w *ViciWrapper) UnloadConnection(pathToFile string) error {
+	conn, err := w.connectionFromFile(pathToFile)
+	if err != nil {
+		return err
+	}
+	ikes := []string{}
+	for _, ike := range w.ikesInSystem {
+		if ike == pathToFile {
+			continue
+		}
+		ikes = append(ikes, ike)
+	}
+	return conn.unloadConnection(w)
+
 }
 func (w *ViciWrapper) ReadConnection(pathToFile string) error {
 	_, err := w.loadConn(pathToFile)
