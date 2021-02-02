@@ -11,7 +11,7 @@ type ViciWrapper struct {
 	execDuraLast		time.Duration
 	execDuraAvgMs		int64
 	counterSecrets		int64
-	ikesInSystem		[]string
+	ikesInSystem		map[string]ikeInSystem
 	saNameSuffix		string
 	checkChannel		chan string
 	initiateChannel		chan loadConnection
@@ -35,6 +35,13 @@ func (v *ViciWrapper) endCommand(hasError error ){
 	}
 	v.execDuraAvgMs = ( v.execDuraAvgMs * v.counterCommands + v.execDuraLast.Nanoseconds() ) / ( v.counterCommands + 1)
 	v.counterCommands ++
+}
+type ikeInSystem struct{
+	ikeName		string
+	initiator	bool
+	numberRemoteTS	int
+	numberLocalTS	int
+	numberChildren	int
 }
 type sharedSecret struct{
 	Id		string			`vici:"id"`
@@ -68,6 +75,7 @@ type ChildSA struct {
 }
 type LoadedIKE struct {
 	Name		string
+	UniqueId	string			`vici:"uniqueid"`
 	Version		int			`vici:"version"`
 	State		string			`vici:"state"`
 	LocalHost	string			`vici:"local-host"`
@@ -87,6 +95,7 @@ type LoadedIKE struct {
 }
 type LoadedChild struct {
 	Name		string			`vici:"name"`
+	UniqueId	string			`vici:"uniqueid"`
 	State		string			`vici:"state"`
 	Mode		string			`vici:"mode"`
 	Protocol	string			`vici:"protocol"`

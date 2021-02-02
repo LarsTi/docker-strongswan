@@ -16,6 +16,8 @@ type connection struct {
 	LocalTS		string	`json:LocalTS,omitempty`
 	RemoteTS	string	`json:RemoteTS,omitempty`
 	ChildProposals	string	`json:ChildProposals,omitempty`
+	UDPEncap	string	`json:UDPEncap,omitempty`
+	Initiator	string	`json:Inititiator,omitempty`
 }
 type retMessage struct {
 	Path		string	`json:Path,omitempty`

@@ -9,6 +9,14 @@ import (
 	"../viciwrapper"
 )
 func getConnectionFromFile(pathToFile string) connection {
+	udp := filewrapper.GetStringValueFromPath(pathToFile, "UDPEncap")
+	if udp == "" {
+		udp = "yes"
+	}
+	initiator := filewrapper.GetStringValueFromPath(pathToFile, "Initiator")
+	if initiator == "" {
+		initiator = "no"
+	}
 	return connection {
 		Path: pathToFile,
 		LocalAddrs: filewrapper.GetStringValueFromPath(pathToFile, "LocalAddrs"),
@@ -18,6 +26,8 @@ func getConnectionFromFile(pathToFile string) connection {
 		LocalTS: filewrapper.GetStringValueFromPath(pathToFile, "LocalTrafficSelectors"),
 		RemoteTS: filewrapper.GetStringValueFromPath(pathToFile, "RemoteTrafficSelectors"),
 		ChildProposals: filewrapper.GetStringValueFromPath(pathToFile, "ESPProposals"),
+		UDPEncap: udp,
+		Initiator: initiator,
 	}
 }
 func getConnection(w http.ResponseWriter, r *http.Request) {

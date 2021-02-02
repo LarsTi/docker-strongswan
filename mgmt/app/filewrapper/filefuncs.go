@@ -101,6 +101,13 @@ func GetStringValueFromPath(path string, value string) string{
         }
         return "";
 }
+func GetBoolValueFromPath(path string, value string) bool {
+	v := GetStringValueFromPath(path,value)
+	if v == "yes" || v == "true" {
+		return true
+	}
+	return false
+}
 func GetIntValueFromPath(path string, value string) int {
         i, err := strconv.Atoi(GetStringValueFromPath(path, value))
         if err != nil {

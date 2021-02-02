@@ -60,6 +60,14 @@ function buildConnectionTable(data){
 		html += "</div>";
 		html += "</div>";
 		html += "<div class=\"row\">";
+		html += "<div class=\"switch\">";
+		var initiator = v.Initiator == "yes" ? "checked" : "";
+		html += "<label>Initiator<input type=\"checkbox\" " + initiator + " id=\"initiator-" + v.Path + "\"><span class=\"lever\"></span></label>";
+		html += "</div>";
+		html += "<div class=\"switch\">";
+		var udp = v.UDPEncap == "yes" ? "checked" : "";
+		html += "<label>UDP Encapsulation<input type=\"checkbox\" " + udp + " id=\"udp-encap-" + v.Path + "\"><span class=\"lever\"></span></label>";
+		html += "</div>";
 		html += "<button type=\"button\" class=\"waves-effect waves-light btn\" onclick=\"onConnectionEdit('" + v.Path + "')\">Edit</button>";
 		html += "<button type=\"button\" class=\"waves-effect waves-light btn\" onclick=\"onConnectionLoad('" + v.Path + "')\">Load</button>";
 		html += "<button type=\"button\" class=\"waves-effect waves-light btn\" onclick=\"onConnectionUnload('" + v.Path + "')\">Unload</button>";
@@ -83,6 +91,8 @@ function getConnectionFromInputs(path){
 		Version: jQuery("#connection-version-" + path).val(),
 		RemoteTS: jQuery("#connection-remote-ts-" + path).val(),
 		LocalTS: jQuery("#connection-local-ts-" + path).val(),
+		UDPEncap: jQuery("#udp-encap-" + path).val()? "yes" : "no",
+		Initiator: jQuery("#initiator-" + path).val()? "yes" : "no"
 	};
 }
 function setConnectionToInputs(c){
@@ -94,6 +104,8 @@ function setConnectionToInputs(c){
 	jQuery("#connection-version-" + c.Path).val(c.Version);
 	jQuery("#connection-remote-ts-" + c.Path).val(c.RemoteTS);
 	jQuery("#connection-local-ts-" + c.Path).val(c.LocalTS);
+	jQuery("#udp-encap" + c.Path).val(c.UDPEncap == "yes" ? true : false);
+	jQuery("#initiator-" + c.Path).val(c.Initiator == "yes" ? true : false);
 }
 function callBackendConn(method, path, url){
 	var data = getConnectionFromInputs(path);

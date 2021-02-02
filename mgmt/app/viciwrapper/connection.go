@@ -2,6 +2,7 @@ package viciwrapper
 
 import (
         "fmt"
+	"log"
 	"../filewrapper"
         "github.com/strongswan/govici/vici"
 )
@@ -13,10 +14,14 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 	
 	ret.DpdDelay = "2s"
 	ret.Mobike = "no"
-	ret.Encap = "yes"
 	ret.Name = path
 	ret.ChildName = path + v.saNameSuffix
 
+	ret.Encap = filewrapper.GetStringValueFromPath(path, "UDPEncap")
+	if ret.Encap == "" {
+		ret.Encap = "yes"
+		log.Printf("[connection][%s] Setting default value for UDPEncap to yes\n", path)
+	}
 	ret.LocalAddrs = filewrapper.GetStringArrayFromPath(path, "LocalAddrs")
 	if (len(ret.LocalAddrs) == 0 || ret.LocalAddrs[0] == ""){
 		return ret, fmt.Errorf("[%s] LocalAddrs not found in config file", path)
@@ -33,9 +38,9 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 	if (len(ret.Proposals) == 0 || ret.Proposals[0] == "") {
 		return ret, fmt.Errorf("[%s] proposals not found in config file", path)
 	}
-	ret.Local = AuthOpts{ Auth: "psk", ID: filewrapper.GetStringValueFromPath("me.secret", "RemoteAddrs"), }
+	ret.Local = AuthOpts{ Auth: "psk", ID: filewrapper.GetStringValueFromPath(path, "LocalAddrs"), }
 	if ret.Local.ID == "" {
-		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file", "me.secret")
+		return ret, fmt.Errorf("[%s] LocalAddrs not found in config file", path)
 	}
 	ret.Remote = AuthOpts{ Auth: "psk", ID: filewrapper.GetStringValueFromPath(path, "RemoteAddrs"), }
 	if ret.Remote.ID == "" {
@@ -53,13 +58,14 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 	}
 	child.Proposals = filewrapper.GetStringArrayFromPath(path, "ESPProposals")
 	if len(child.Proposals) == 0 || child.Proposals[0] == "" {
-		return ret, fmt.Errorf("[%s] ESPProposals not found inf config file", path)
+		return ret, fmt.Errorf("[%s] ESPProposals not found in config file", path)
 	}
 	ret.Children[ret.ChildName] = child
 	
 	return ret, nil
 }
 func (c loadConnection) unloadConnection(v *ViciWrapper) error {
+	delete(v.ikesInSystem, c.Name)
 	m := vici.NewMessage()
         if err := m.Set("name", c.Name); err != nil {
                 return fmt.Errorf("[unload-conn] %s", err)
@@ -86,6 +92,20 @@ func (c loadConnection) loadConnection(v *ViciWrapper) error {
 	if e != nil {
 		return fmt.Errorf("[load-conn] %s", e)
 	}
+	remoteTS := 0
+	localTS := 0
+	for _, child := range c.Children {
+		remoteTS += len(child.RemoteTS)
+		localTS += len(child.LocalTS)
+	}
+	v.ikesInSystem[c.Name] = ikeInSystem{
+		ikeName: c.Name,
+		initiator: filewrapper.GetBoolValueFromPath(c.Name, "Initiator"),
+		numberRemoteTS: remoteTS,
+		numberLocalTS: localTS,
+		numberChildren: len(c.Children),
+	}
+
 	return nil
 }
 func (c loadConnection) reload(v *ViciWrapper) error {
@@ -128,17 +148,6 @@ func (c loadConnection) terminate(v *ViciWrapper) error {
 	return nil
 }
 func (w *ViciWrapper) loadConn(path string) (loadConnection, error){
-	found := false
-	for _, loaded := range w.ikesInSystem {
-		if loaded == path {
-			found = true
-			break
-		}
-	}
-	if found == false {
-		w.ikesInSystem = append(w.ikesInSystem, path)
-	}
-
 	c, e := w.connectionFromFile(path)
 	if e != nil {
 		return c, e
