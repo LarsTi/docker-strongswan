@@ -3,6 +3,8 @@ import (
         "log"
         "context"
 	"time"
+	"fmt"
+	"../filewrapper"
 )
 func (v *ViciWrapper) monitorConns(){
 	lastEventTime := make(map [string]time.Time)
@@ -66,52 +68,94 @@ func (v *ViciWrapper) watchIkes() {
 				}
 				v.checkChannel <- conn.Name
 			case ikeName := <- v.checkChannel:
-				ikeCnt,saCnt, _ := v.findIke(ikeName)
-				if ikeCnt == 1 && saCnt == 1 {
-					log.Printf("[%s] is correct connected and operational\n", ikeName)
-					continue
-				}
 				conn, errConn := v.connectionFromFile(ikeName)
-				if errConn != nil {
-					log.Printf("[%s] can not be read correctly, ignoring\n", ikeName)
+				if errConn != nil{
+					v.UnloadConnection(ikeName)
+					v.ReadConnection(ikeName)
 					continue
 				}
-				log.Printf("[%s] is wrong connected, %d Ikes found, %d children found\n", ikeName, ikeCnt, saCnt)
-				if ikeCnt > 1 || saCnt > 1 {
-					//irgendwas ist hier falsch, erstmal disconnecten
+				ike, err := v.findIke(ikeName)
+				if err != nil {
+					log.Println(err)
 					v.terminateChannel <- conn
-				}else {
-					//ike ist connected, sa nicht, also einfach neu connecten lassen
+					continue
+				}
+				ikeExpected := v.ikesInSystem[ikeName]
+				if ikeExpected.numberRemoteTS != ike.numberRemoteTS {
+					log.Printf("[%s] Remote Traffic Selectors: expected %d, found\n", ikeName, ikeExpected.numberRemoteTS, ike.numberRemoteTS)
+				}else if ikeExpected.numberLocalTS != ike.numberLocalTS {
+					log.Printf("[%s] Local Traffic Selectors: expected %d, found\n", ikeName, ikeExpected.numberLocalTS, ike.numberLocalTS)
+				}else if ikeExpected.numberChildren != ike.numberChildren {
+					log.Printf("[%s] Children: expected %d, found\n", ikeName, ikeExpected.numberChildren, ike.numberChildren)
+				}else{
+					log.Printf("[%s] looks good!\n", ikeName)
+					continue
+				}
+				if ikeExpected.numberRemoteTS > ike.numberRemoteTS ||
+					ikeExpected.numberLocalTS > ike.numberLocalTS ||
+					ikeExpected.numberChildren > ike.numberChildren {
 					v.initiateChannel <- conn
+				}else{
+					v.terminateChannel <- conn
 				}
 			case <- ticker.C:
-				for _,ikeName := range v.ikesInSystem {
-					v.checkChannel <- ikeName
+				for _,ike := range v.ikesInSystem {
+					if ike.initiator == false {
+						continue
+					}
+					v.checkChannel <- ike.ikeName
 				}
 		}
 	}
 }
-
-func (v *ViciWrapper) findIke(ikeName string)(int, int, error){
+func (v *ViciWrapper) checkIke(ikeName string) (bool, error){
+	conn, errC := v.connectionFromFile(ikeName)
+	if errC != nil {
+		return false, errC
+	}
+	if conn.Name == ikeName {
+		return true, nil
+	}
+	ikes, errS := v.listSAs()
+	if errS != nil {
+		return false, errS
+	}
+	for _, ike := range ikes {
+		if ike.Name == ikeName {
+			return true, nil
+		}
+	}
+	return false, nil
+}
+func (v *ViciWrapper) findIke(ikeName string)(ikeInSystem, error){
+	retVal := ikeInSystem{
+		ikeName: ikeName,
+		initiator: filewrapper.GetBoolValueFromPath(ikeName, "Initiator"),
+		numberRemoteTS: 0,
+		numberLocalTS: 0,
+		numberChildren: 0,
+	}
 	ikes, err := v.listSAs()
 	if err != nil {
 		log.Fatalf("[%s] %s", ikeName, err)
-		return 0,0, err
+		return retVal, err
 	}
 	ikeCnt := 0
-	saCnt := 0
 	for _, ike := range ikes {
 		if ike.Name == ikeName {
-			//log.Printf("[%s] IKE is connected\n", ikeName)
 			ikeCnt ++
 		}else {
 			continue
 		}
-		if (len(ike.Children) > 0) {
-			saCnt += len(ike.Children)
-			//log.Printf("[%s] SA is connected, nothing to do\n", ikeName)
+		for _, child := range ike.Children {
+			retVal.numberChildren += 1
+			retVal.numberRemoteTS += len(child.RemoteTS)
+			retVal.numberLocalTS += len(child.LocalTS)
 		}
 	}
-	return ikeCnt, saCnt, nil
+	if ikeCnt != 1 {
+		return retVal, fmt.Errorf("[%s] there are %d ikes connected, 1 expected!", ikeName, ikeCnt)
+	}
+	return retVal, nil
 
 }

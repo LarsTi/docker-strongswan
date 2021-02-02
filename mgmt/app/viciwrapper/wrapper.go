@@ -19,6 +19,7 @@ func GetWrapper() (*ViciWrapper, error) {
 		return &ViciWrapper{}, err
 	}
 	me.session = s
+	me.ikesInSystem = make(map[string]ikeInSystem)
 	me.checkChannel = make(chan string, 100)
 	me.terminateChannel = make(chan loadConnection, 10)
 	me.initiateChannel = make(chan loadConnection, 10)
@@ -51,12 +52,14 @@ func (w *ViciWrapper) UnloadConnection(pathToFile string) error {
 	if err != nil {
 		return err
 	}
-	ikes := []string{}
+	ikes := []ikeInSystem{}
 	for _, ike := range w.ikesInSystem {
-		if ike == pathToFile {
+		if ike.ikeName == pathToFile {
 			continue
 		}
-		ikes = append(ikes, ike)
+		ikes = append(ikes, ikeInSystem{
+			ikeName: pathToFile,
+		})
 	}
 	return conn.unloadConnection(w)
 
