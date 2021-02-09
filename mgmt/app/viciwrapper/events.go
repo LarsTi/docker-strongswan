@@ -50,7 +50,7 @@ func (v *ViciWrapper) watchIkes() {
 	go v.monitorConns()
 	log.Printf("[watch] Start watching for %d ikes\n", len(v.ikesInSystem))
 	ticker := time.NewTicker(20 * time.Second)
-
+	tickCount := 20
 	for {
 		select {
 			case conn := <- v.terminateChannel:
@@ -107,6 +107,10 @@ func (v *ViciWrapper) watchIkes() {
 						continue
 					}
 					v.checkChannel <- ike.ikeName
+				}
+				if tickCount -- < 1 {
+					log.Println("[WATCH] - I am alive")
+					tickCount = 20
 				}
 		}
 	}
