@@ -102,13 +102,14 @@ func (v *ViciWrapper) watchIkes() {
 					v.terminateChannel <- conn
 				}
 			case <- ticker.C:
+				tickCount --
 				for _,ike := range v.ikesInSystem {
 					if ike.initiator == false {
 						continue
 					}
 					v.checkChannel <- ike.ikeName
 				}
-				if tickCount -- < 1 {
+				if tickCount < 1 {
 					log.Println("[WATCH] - I am alive")
 					tickCount = 20
 				}
