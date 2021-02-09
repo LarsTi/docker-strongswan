@@ -69,6 +69,7 @@ type AuthOpts struct{
 	ID		string			`vici:"id"`
 }
 type ChildSA struct {
+	Name		string
 	LocalTS		[]string		`vici:"local_ts"`
 	RemoteTS	[]string		`vici:"remote_ts"`
 	Proposals	[]string		`vici:"esp_proposals"`
