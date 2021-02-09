@@ -74,19 +74,22 @@ func (v *ViciWrapper) watchIkes() {
 					v.ReadConnection(ikeName)
 					continue
 				}
-				ike, err := v.findIke(ikeName)
-				if err != nil {
+				ike, ikeCount, err := v.findIke(ikeName)
+				if ikeCount == 0 && err != nil {
+					log.Println(err)
+					v.initiateChannel <- conn
+				}else if err != nil {
 					log.Println(err)
 					v.terminateChannel <- conn
 					continue
 				}
 				ikeExpected := v.ikesInSystem[ikeName]
 				if ikeExpected.numberRemoteTS != ike.numberRemoteTS {
-					log.Printf("[%s] Remote Traffic Selectors: expected %d, found\n", ikeName, ikeExpected.numberRemoteTS, ike.numberRemoteTS)
+					log.Printf("[%s] Remote Traffic Selectors: expected %d, found %d\n", ikeName, ikeExpected.numberRemoteTS, ike.numberRemoteTS)
 				}else if ikeExpected.numberLocalTS != ike.numberLocalTS {
-					log.Printf("[%s] Local Traffic Selectors: expected %d, found\n", ikeName, ikeExpected.numberLocalTS, ike.numberLocalTS)
+					log.Printf("[%s] Local Traffic Selectors: expected %d, found %d\n", ikeName, ikeExpected.numberLocalTS, ike.numberLocalTS)
 				}else if ikeExpected.numberChildren != ike.numberChildren {
-					log.Printf("[%s] Children: expected %d, found\n", ikeName, ikeExpected.numberChildren, ike.numberChildren)
+					log.Printf("[%s] Children: expected %d, found %d\n", ikeName, ikeExpected.numberChildren, ike.numberChildren)
 				}else{
 					log.Printf("[%s] looks good!\n", ikeName)
 					continue
@@ -127,7 +130,7 @@ func (v *ViciWrapper) checkIke(ikeName string) (bool, error){
 	}
 	return false, nil
 }
-func (v *ViciWrapper) findIke(ikeName string)(ikeInSystem, error){
+func (v *ViciWrapper) findIke(ikeName string)(ikeInSystem, int, error){
 	retVal := ikeInSystem{
 		ikeName: ikeName,
 		initiator: filewrapper.GetBoolValueFromPath(ikeName, "Initiator"),
@@ -138,7 +141,7 @@ func (v *ViciWrapper) findIke(ikeName string)(ikeInSystem, error){
 	ikes, err := v.listSAs()
 	if err != nil {
 		log.Fatalf("[%s] %s", ikeName, err)
-		return retVal, err
+		return retVal, 0, err
 	}
 	ikeCnt := 0
 	for _, ike := range ikes {
@@ -154,8 +157,8 @@ func (v *ViciWrapper) findIke(ikeName string)(ikeInSystem, error){
 		}
 	}
 	if ikeCnt != 1 {
-		return retVal, fmt.Errorf("[%s] there are %d ikes connected, 1 expected!", ikeName, ikeCnt)
+		return retVal,ikeCnt, fmt.Errorf("[%s] there are %d ikes connected, 1 expected!", ikeName, ikeCnt)
 	}
-	return retVal, nil
+	return retVal, ikeCnt, nil
 
 }

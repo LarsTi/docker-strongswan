@@ -47,20 +47,34 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file", path)
 	}
 	ret.Children = make(map[string]ChildSA)
-	child := ChildSA{}
-	child.LocalTS = filewrapper.GetStringArrayFromPath(path, "LocalTrafficSelectors")
-	if len(child.LocalTS) == 0 || child.LocalTS[0] == "" {
-		return ret, fmt.Errorf("[%s] LocalTrafficSelectors not found in config file", path)
+	if ret.Version == 1{
+		count := 0
+		for _, localTS := range filewrapper.GetStringArrayFromPath(path, "LocalTrafficSelectors"){
+			for _, remoteTS := range filewrapper.GetStringArrayFromPath(path, "RemoteTrafficSelectors"){
+				count ++
+				child := ChildSA{ }
+				child.Name = fmt.Sprintf("%s-%s%d", path, v.saNameSuffix,count)
+				child.LocalTS = append(child.LocalTS, localTS)
+				child.RemoteTS = append(child.RemoteTS, remoteTS)
+				ret.Children[child.Name] = child
+			}
+		}
+	}else{
+		child := ChildSA{}
+		child.LocalTS = filewrapper.GetStringArrayFromPath(path, "LocalTrafficSelectors")
+	       	if len(child.LocalTS) == 0 || child.LocalTS[0] == "" {
+		       	return ret, fmt.Errorf("[%s] LocalTrafficSelectors not found in config file", path)
+	       	}
+	       child.RemoteTS = filewrapper.GetStringArrayFromPath(path, "RemoteTrafficSelectors")
+	       if len(child.RemoteTS) == 0 || child.RemoteTS[0] == "" {
+		       return ret, fmt.Errorf("[%s] RemoteTrafficSelectors not found in config file", path)
+	       }
+	       child.Proposals = filewrapper.GetStringArrayFromPath(path, "ESPProposals")
+	       if len(child.Proposals) == 0 || child.Proposals[0] == "" {
+		       return ret, fmt.Errorf("[%s] ESPProposals not found in config file", path)
+	       }
+       ret.Children[ret.ChildName] = child
 	}
-	child.RemoteTS = filewrapper.GetStringArrayFromPath(path, "RemoteTrafficSelectors")
-	if len(child.RemoteTS) == 0 || child.RemoteTS[0] == "" {
-		return ret, fmt.Errorf("[%s] RemoteTrafficSelectors not found in config file", path)
-	}
-	child.Proposals = filewrapper.GetStringArrayFromPath(path, "ESPProposals")
-	if len(child.Proposals) == 0 || child.Proposals[0] == "" {
-		return ret, fmt.Errorf("[%s] ESPProposals not found in config file", path)
-	}
-	ret.Children[ret.ChildName] = child
 	
 	return ret, nil
 }
@@ -113,18 +127,21 @@ func (c loadConnection) reload(v *ViciWrapper) error {
 	return c.loadConnection(v)
 }
 func (c loadConnection) initiateConnection(v *ViciWrapper) error {
-	m := vici.NewMessage()
-	if err := m.Set("child", c.ChildName); err != nil{
-		return fmt.Errorf("[initiate] %s", err)
-	}
-	if err := m.Set("ike", c.Name); err != nil {
-		return fmt.Errorf("[initiate] %s", err)
-	}
-	v.startCommand()
-	_, err := v.session.CommandRequest("initiate", m)
-	v.endCommand(err)
-	if err != nil {
-		return fmt.Errorf("[initiate] %s", err)
+	for child, _ := range c.Children{
+		m := vici.NewMessage()
+	   	if err := m.Set("child", child); err != nil{
+		 	return fmt.Errorf("[initiate] %s", err)
+	   	}
+   		if err := m.Set("ike", c.Name); err != nil {
+	   		return fmt.Errorf("[initiate] %s", err)
+   		}
+   		v.startCommand()
+   		_, err := v.session.CommandRequest("initiate", m)
+   		v.endCommand(err)
+   		if err != nil {
+	   		return fmt.Errorf("[initiate] %s", err)
+	   	}
+		log.Printf("[initiate] IKE %s child %s initiated\n", c.Name, child)
 	}
 	return nil
 }
