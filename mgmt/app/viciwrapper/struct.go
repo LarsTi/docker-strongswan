@@ -13,9 +13,10 @@ type ViciWrapper struct {
 	counterSecrets		int64
 	ikesInSystem		map[string]ikeInSystem
 	saNameSuffix		string
-	checkChannel		chan string
+	checkChannel		chan ikeInSystem
 	initiateChannel		chan loadConnection
 	terminateChannel	chan loadConnection
+	checkDelay		[]string
 }
 type ViciMetrics struct {
 	CounterCommands int64
@@ -38,10 +39,17 @@ func (v *ViciWrapper) endCommand(hasError error ){
 }
 type ikeInSystem struct{
 	ikeName		string
+	Version		int
 	initiator	bool
 	numberRemoteTS	int
 	numberLocalTS	int
 	numberChildren	int
+	selectors	[]tsFound
+	duplicateTS	[]tsFound
+}
+type tsFound struct{
+	localTS 	[]string
+	remoteTS	[]string
 }
 type sharedSecret struct{
 	Id		string			`vici:"id"`

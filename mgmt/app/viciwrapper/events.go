@@ -39,8 +39,10 @@ func (v *ViciWrapper) monitorConns(){
 			}
 			lastEvent, ok := lastEventTime[value]
 			if (ok && time.Since(lastEvent) > 20 * time.Second){
-				v.checkChannel <- value
+				//v.checkChannel <- v.ikesInSystem[value]
 			}
+			v.checkDelay = append(v.checkDelay, value)
+
 			lastEventTime[value] = time.Now()
 		}
 
@@ -50,7 +52,7 @@ func (v *ViciWrapper) watchIkes() {
 	go v.monitorConns()
 	log.Printf("[watch] Start watching for %d ikes\n", len(v.ikesInSystem))
 	ticker := time.NewTicker(20 * time.Second)
-
+	tickCount := 20
 	for {
 		select {
 			case conn := <- v.terminateChannel:
@@ -66,69 +68,75 @@ func (v *ViciWrapper) watchIkes() {
 					log.Printf("[%s] could not connect: %s\n", conn.Name, errInitiate)
 					continue
 				}
-				v.checkChannel <- conn.Name
-			case ikeName := <- v.checkChannel:
-				conn, errConn := v.connectionFromFile(ikeName)
-				if errConn != nil{
-					v.UnloadConnection(ikeName)
-					v.ReadConnection(ikeName)
-					continue
-				}
-				ike, ikeCount, err := v.findIke(ikeName)
-				if ikeCount == 0 && err != nil {
-					log.Println(err)
-					v.initiateChannel <- conn
-				}else if err != nil {
-					log.Println(err)
-					v.terminateChannel <- conn
-					continue
-				}
-				ikeExpected := v.ikesInSystem[ikeName]
-				if ikeExpected.numberRemoteTS != ike.numberRemoteTS {
-					log.Printf("[%s] Remote Traffic Selectors: expected %d, found %d\n", ikeName, ikeExpected.numberRemoteTS, ike.numberRemoteTS)
-				}else if ikeExpected.numberLocalTS != ike.numberLocalTS {
-					log.Printf("[%s] Local Traffic Selectors: expected %d, found %d\n", ikeName, ikeExpected.numberLocalTS, ike.numberLocalTS)
-				}else if ikeExpected.numberChildren != ike.numberChildren {
-					log.Printf("[%s] Children: expected %d, found %d\n", ikeName, ikeExpected.numberChildren, ike.numberChildren)
-				}else{
-					log.Printf("[%s] looks good!\n", ikeName)
-					continue
-				}
-				if ikeExpected.numberRemoteTS > ike.numberRemoteTS ||
-					ikeExpected.numberLocalTS > ike.numberLocalTS ||
-					ikeExpected.numberChildren > ike.numberChildren {
-					v.initiateChannel <- conn
-				}else{
-					v.terminateChannel <- conn
-				}
+				v.checkChannel <- v.ikesInSystem[conn.Name]
+			case ike := <- v.checkChannel:
+				v.checkIke(ike)
 			case <- ticker.C:
+				tickCount --
 				for _,ike := range v.ikesInSystem {
-					if ike.initiator == false {
+					delayed := false
+					for _, ikeDelay := range v.checkDelay{
+						if ikeDelay == ike.ikeName {
+							log.Printf("[WATCH] %s is in Delay Mode", ikeDelay)
+							delayed = true
+							break
+						}
+					}
+					if delayed {
+						//Dont check this entity now!
 						continue
 					}
-					v.checkChannel <- ike.ikeName
+					v.checkChannel <- ike
+				}
+				if len(v.checkDelay) > 0 {
+					log.Printf("[WATCH] Deleting %d entries from delaylist", len(v.checkDelay))
+					v.checkDelay = nil
+				}
+				
+				if tickCount < 1 {
+					log.Println("[WATCH] I am alive")
+					tickCount = 20
 				}
 		}
 	}
 }
-func (v *ViciWrapper) checkIke(ikeName string) (bool, error){
-	conn, errC := v.connectionFromFile(ikeName)
-	if errC != nil {
-		return false, errC
+func (v *ViciWrapper) checkIke(ikeExpected ikeInSystem) {
+	conn, errConn := v.connectionFromFile(ikeExpected.ikeName)
+	if errConn != nil{
+		v.UnloadConnection(ikeExpected.ikeName)
+		v.ReadConnection(ikeExpected.ikeName)
+		return
 	}
-	if conn.Name == ikeName {
-		return true, nil
+	ike, ikeCount, err := v.findIke(ikeExpected.ikeName)
+	if ikeCount == 0 && err != nil && !ikeExpected.initiator {
+		log.Println(err)
+		v.initiateChannel <- conn
+	}else if err != nil && !ikeExpected.initiator{
+		log.Println(err)
+		v.terminateChannel <- conn
+		return
 	}
-	ikes, errS := v.listSAs()
-	if errS != nil {
-		return false, errS
+	if ikeExpected.numberRemoteTS != ike.numberRemoteTS {
+		log.Printf("[WATCH][%s] Remote Traffic Selectors: expected %d, found %d\n", ikeExpected.ikeName, ikeExpected.numberRemoteTS, ike.numberRemoteTS)
+	}else if ikeExpected.numberLocalTS != ike.numberLocalTS {
+		log.Printf("[WATCH][%s] Local Traffic Selectors: expected %d, found %d\n", ikeExpected.ikeName, ikeExpected.numberLocalTS, ike.numberLocalTS)
+	}else if ikeExpected.numberChildren != ike.numberChildren {
+		log.Printf("[WATCH][%s] Children: expected %d, found %d\n", ikeExpected.ikeName, ikeExpected.numberChildren, ike.numberChildren)
+	}else{
+		log.Printf("[WATCH][%s] looks good!\n", ikeExpected.ikeName)
+		return
 	}
-	for _, ike := range ikes {
-		if ike.Name == ikeName {
-			return true, nil
-		}
+	if ikeExpected.initiator == false {
+		log.Printf("[WATCH][%s] is not an initiator, therefor leaving check now\n", ikeExpected.ikeName)
+		return
 	}
-	return false, nil
+	if ikeExpected.numberRemoteTS > ike.numberRemoteTS ||
+		ikeExpected.numberLocalTS > ike.numberLocalTS ||
+		ikeExpected.numberChildren > ike.numberChildren {
+		v.initiateChannel <- conn
+	}else{
+		v.terminateChannel <- conn
+	}
 }
 func (v *ViciWrapper) findIke(ikeName string)(ikeInSystem, int, error){
 	retVal := ikeInSystem{
@@ -147,6 +155,7 @@ func (v *ViciWrapper) findIke(ikeName string)(ikeInSystem, int, error){
 	for _, ike := range ikes {
 		if ike.Name == ikeName {
 			ikeCnt ++
+			retVal.Version = ike.Version
 		}else {
 			continue
 		}
@@ -154,8 +163,15 @@ func (v *ViciWrapper) findIke(ikeName string)(ikeInSystem, int, error){
 			retVal.numberChildren += 1
 			retVal.numberRemoteTS += len(child.RemoteTS)
 			retVal.numberLocalTS += len(child.LocalTS)
+
+			selector := tsFound{
+				localTS: child.LocalTS,
+				remoteTS: child.RemoteTS,
+			}
+			retVal.selectors = append(retVal.selectors, selector)
 		}
 	}
+	log.Printf("[CHECK] %s: %d, children: %d, remote/local: %d/%d\n", retVal.ikeName, ikeCnt, retVal.numberChildren, retVal.numberRemoteTS, retVal.numberLocalTS)
 	if ikeCnt != 1 {
 		return retVal,ikeCnt, fmt.Errorf("[%s] there are %d ikes connected, 1 expected!", ikeName, ikeCnt)
 	}
