@@ -16,7 +16,6 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 	ret.DpdDelay = "2s"
 	ret.Mobike = "no"
 	ret.Name = path
-	ret.ChildName = path + v.saNameSuffix
 
 	ret.Encap = filewrapper.GetStringValueFromPath(path, "UDPEncap")
 	if ret.Encap == "" {
@@ -74,7 +73,9 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 	       if len(child.Proposals) == 0 || child.Proposals[0] == "" {
 		       return ret, fmt.Errorf("[%s] ESPProposals not found in config file", path)
 	       }
-       ret.Children[ret.ChildName] = child
+	       child.Name = fmt.Sprintf("%s-%s", path, v.saNameSuffix)
+       		ret.Children[child.Name] = child
+		ret.ChildName = child.Name
 	}
 	
 	return ret, nil
