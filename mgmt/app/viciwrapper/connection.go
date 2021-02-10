@@ -3,6 +3,7 @@ package viciwrapper
 import (
         "fmt"
 	"log"
+	"strings"
 	"../filewrapper"
         "github.com/strongswan/govici/vici"
 )
@@ -127,21 +128,45 @@ func (c loadConnection) reload(v *ViciWrapper) error {
 	return c.loadConnection(v)
 }
 func (c loadConnection) initiateConnection(v *ViciWrapper) error {
-	for child, _ := range c.Children{
-		m := vici.NewMessage()
-	   	if err := m.Set("child", child); err != nil{
-		 	return fmt.Errorf("[initiate] %s", err)
-	   	}
-   		if err := m.Set("ike", c.Name); err != nil {
-	   		return fmt.Errorf("[initiate] %s", err)
-   		}
-   		v.startCommand()
-   		_, err := v.session.CommandRequest("initiate", m)
-   		v.endCommand(err)
-   		if err != nil {
-	   		return fmt.Errorf("[initiate] %s", err)
-	   	}
-		log.Printf("[initiate] IKE %s child %s initiated\n", c.Name, child)
+	ikeInSystem, cnt, _ := v.findIke(c.Name)
+	if cnt == 0 || cnt == 1 {
+		for child, childObj := range c.Children{
+			if cnt == 1 && len (c.Children) != 1 {
+				found := false
+				remoteTS := strings.Join(childObj.RemoteTS, ",")
+				localTS := strings.Join(childObj.LocalTS, ",")
+				for _, tsFound := range ikeInSystem.selectors {
+					remoteTSFound := strings.Join(tsFound.remoteTS, ",")
+					localTSFound := strings.Join(tsFound.localTS, ",")
+					
+					if(localTS == localTSFound && remoteTS == remoteTSFound){
+						log.Printf("[initiate] IKE %s child %s already initiated\n", c.Name,child)
+						found = true
+						break
+					}
+				}
+				if found {
+					//TS wurde gefunden, weiter gehen
+					continue
+				}
+			}
+			m := vici.NewMessage()
+	   		if err := m.Set("child", child); err != nil{
+			 	return fmt.Errorf("[initiate] %s", err)
+		   	}
+   			if err := m.Set("ike", c.Name); err != nil {
+		   		return fmt.Errorf("[initiate] %s", err)
+	   		}
+   			v.startCommand()
+   			_, err := v.session.CommandRequest("initiate", m)
+	   		v.endCommand(err)
+   			if err != nil {
+		   		return fmt.Errorf("[initiate] %s", err)
+		   	}
+			log.Printf("[initiate] IKE %s child %s initiated\n", c.Name, child)
+		}
+	}else{
+		return fmt.Errorf("[initiate] IKE %s is connected %d times!", c.Name, cnt)
 	}
 	return nil
 }

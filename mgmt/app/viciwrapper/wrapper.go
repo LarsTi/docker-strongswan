@@ -20,7 +20,7 @@ func GetWrapper() (*ViciWrapper, error) {
 	}
 	me.session = s
 	me.ikesInSystem = make(map[string]ikeInSystem)
-	me.checkChannel = make(chan string, 100)
+	me.checkChannel = make(chan ikeInSystem, 100)
 	me.terminateChannel = make(chan loadConnection, 10)
 	me.initiateChannel = make(chan loadConnection, 10)
 	me.saNameSuffix = "net"
