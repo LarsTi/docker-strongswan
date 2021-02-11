@@ -41,6 +41,7 @@ type ikeInSystem struct{
 	ikeName		string
 	Version		int
 	initiator	bool
+	multiChild	bool
 	numberRemoteTS	int
 	numberLocalTS	int
 	numberChildren	int
@@ -63,7 +64,6 @@ type loadConnection struct{
 	RemoteAddrs	[]string		`vici:"remote_addrs"`
 	Local		AuthOpts		`vici:"local"`
 	Remote		AuthOpts		`vici:"remote"`
-	ChildName	string
 	Children	map[string]ChildSA	`vici:"children"`
 	Version		int			`vici:"version"`
 	Proposals	[]string		`vici:"proposals"`

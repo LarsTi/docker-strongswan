@@ -47,7 +47,8 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 		return ret, fmt.Errorf("[%s] RemoteAddrs not found in config file", path)
 	}
 	ret.Children = make(map[string]ChildSA)
-	if ret.Version == 1{
+
+	if  filewrapper.GetBoolValueFromPath(path, "MultiChild") {
 		count := 0
 		for _, localTS := range filewrapper.GetStringArrayFromPath(path, "LocalTrafficSelectors"){
 			for _, remoteTS := range filewrapper.GetStringArrayFromPath(path, "RemoteTrafficSelectors"){
@@ -75,7 +76,6 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 	       }
 	       child.Name = fmt.Sprintf("%s-%s", path, v.saNameSuffix)
        		ret.Children[child.Name] = child
-		ret.ChildName = child.Name
 	}
 	
 	return ret, nil
@@ -117,6 +117,7 @@ func (c loadConnection) loadConnection(v *ViciWrapper) error {
 	v.ikesInSystem[c.Name] = ikeInSystem{
 		ikeName: c.Name,
 		initiator: filewrapper.GetBoolValueFromPath(c.Name, "Initiator"),
+		multiChild: filewrapper.GetBoolValueFromPath(c.Name, "MultiChild"),
 		numberRemoteTS: remoteTS,
 		numberLocalTS: localTS,
 		numberChildren: len(c.Children),
