@@ -166,7 +166,7 @@ func createSecret (w http.ResponseWriter, r *http.Request){
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	_, err = changeIfNeeded(path, "PSK", secret.Owners)
+	_, err = changeIfNeeded(path, "PSK", secret.Data)
 	if err != nil{
 		log.Printf("[webapi] %s\n", err)
 		http.Error(w, err.Error(), http.StatusBadRequest)
