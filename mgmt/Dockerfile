@@ -1,4 +1,4 @@
-FROM golang:latest as builder
+FROM golang:1.15 as builder
 WORKDIR /app/src
 RUN go get github.com/gorilla/mux && \
     go get github.com/prometheus/client_golang/prometheus && \
