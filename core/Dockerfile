@@ -5,7 +5,7 @@ RUN mkdir -p /conf
 RUN apt-get update && apt-get install -y iptables \
   libgmp-dev
 
-ENV STRONGSWAN_VERSION 5.9.1
+ENV STRONGSWAN_VERSION 5.9.2
 ENV GPG_KEY 948F158A4E76A27BF3D07532DF42C170B34DBA77
 
 RUN mkdir -p /usr/src/strongswan \
