@@ -16,6 +16,11 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 	ret.DpdDelay = "2s"
 	ret.Mobike = "no"
 	ret.Name = path
+	
+	ret.RekeyTime = filewrapper.GetStringValueFromPath(path, "RekeyTime")
+	if ret.RekeyTime == "" {
+		ret.RekeyTime = "4h"
+	}
 
 	ret.Encap = filewrapper.GetStringValueFromPath(path, "UDPEncap")
 	if ret.Encap == "" {
@@ -57,6 +62,12 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 				child.Name = fmt.Sprintf("%s-%s%d", path, v.saNameSuffix,count)
 				child.LocalTS = append(child.LocalTS, localTS)
 				child.RemoteTS = append(child.RemoteTS, remoteTS)
+				child.RekeyTime = "3h"
+				child.RekeyTime = filewrapper.GetStringValueFromPath(path,"ChildRekeyTime")
+				if child.RekeyTime == "" {
+					child.RekeyTime = "3h"
+				}
+
 				ret.Children[child.Name] = child
 			}
 		}
@@ -75,7 +86,12 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 		       return ret, fmt.Errorf("[%s] ESPProposals not found in config file", path)
 	       }
 	       child.Name = fmt.Sprintf("%s-%s", path, v.saNameSuffix)
-       		ret.Children[child.Name] = child
+	       child.RekeyTime = filewrapper.GetStringValueFromPath(path,"ChildRekeyTime")
+	       if child.RekeyTime == "" {
+	       	child.RekeyTime = "3h"
+	       }
+
+		ret.Children[child.Name] = child
 	}
 	
 	return ret, nil
