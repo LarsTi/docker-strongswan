@@ -72,9 +72,13 @@ subnet="$(ip route | grep $me | awk '{print $1}')"
 echo "Found subnet $subnet for private ip $me"
 if [[ -z "${MASQUERADE_SUB}" ]]; then
 	echo "Not Masquerading"
+elif [[ -f "masquerade.sh" ]]; then
+	echo "Found masquerade.sh - calling custom script"
+	/bin/bash masquerade.sh
 else
 	echo "Masquerading all Traffic not coming from internal network $subnet, so you can ping it!"
 	iptables --table nat --append POSTROUTING ! --source $subnet --jump MASQUERADE
+	echo ".. Done. you could use masquerade.sh to do this on your own"
 fi
 if [[ -z "${VPN_GATEWAY}" ]]; then
 	echo "Not setting vpn-gateway, ensure you can reach all networks from this container!"
