@@ -1,6 +1,6 @@
 FROM buildpack-deps:stable
 
-RUN mkdir -p /conf
+WORKDIR /docker
 
 RUN apt-get update && apt-get install -y iptables \
   libgmp-dev
@@ -29,5 +29,5 @@ RUN mkdir -p /usr/src/strongswan \
         && make install \
         && rm -rf "/usr/src/strongswan/*"
 RUN apt-get install -y traceroute tcpdump net-tools
-COPY ./start.sh /conf/start
-CMD ["/bin/bash", "/conf/start"]
+COPY ./start.sh /docker/start
+CMD ["/bin/bash", "/docker/start"]
