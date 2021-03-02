@@ -71,6 +71,7 @@ type loadConnection struct{
 	DpdTimeout	string			`vici:"dpd_timeout"`
 	Mobike		string			`vici:"mobike"`
 	Encap		string			`vici:"encap"`
+	RekeyTime	string			`vici:"rekey_time"`
 }
 type AuthOpts struct{
 	Auth		string			`vici:"auth"`
@@ -81,6 +82,7 @@ type ChildSA struct {
 	LocalTS		[]string		`vici:"local_ts"`
 	RemoteTS	[]string		`vici:"remote_ts"`
 	Proposals	[]string		`vici:"esp_proposals"`
+	RekeyTime	string			`vici:"rekey_time"`
 }
 type LoadedIKE struct {
 	Name		string
