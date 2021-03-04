@@ -62,6 +62,7 @@ func (v *ViciWrapper) connectionFromFile(path string) (loadConnection, error){
 				child.Name = fmt.Sprintf("%s-%s%d", path, v.saNameSuffix,count)
 				child.LocalTS = append(child.LocalTS, localTS)
 				child.RemoteTS = append(child.RemoteTS, remoteTS)
+				child.Proposals = filewrapper.GetStringArrayFromPath(path,"ESPProposals")
 				child.RekeyTime = "3h"
 				child.RekeyTime = filewrapper.GetStringValueFromPath(path,"ChildRekeyTime")
 				if child.RekeyTime == "" {
